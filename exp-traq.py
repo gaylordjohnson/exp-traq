@@ -44,6 +44,7 @@ class Entry(ndb.Model):
     author = ndb.StructuredProperty(Author)
     timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
+
 #[mk:] from https://cloud.google.com/appengine/docs/python/datastore/typesandpropertyclasses#datetime
 class EasternTZInfo(datetime.tzinfo):
     """Implementation of the Eastern timezone."""
