@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <title>Exp-traq</title>
+<!--     <link type="text/css" rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link type="text/css" rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+ -->    
+    <link type="text/css" rel="stylesheet" href="/css/main.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- GOOGLE ICON FONTS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script>
+    function showDateField() {
+      document.getElementById('dateDefault').style.display = 'none';
+      
+      var dateField = document.getElementById('dateField');
+      dateField.style.display = 'block';
+      dateField.click();
+      dateField.focus();
+    }
+
+    function showCommentField() {
+      document.getElementById('commentDefault').style.display = 'none';
+      
+      var commentField = document.getElementById('commentField');
+      commentField.style.display = 'block';
+      commentField.focus();
+    }
+
+    function deleteEntry(item_id) {
+      var okToDelete = confirm("OK to delete entry?");
+      if (okToDelete == true) {
+        var ajaxRequest = new XMLHttpRequest();
+        ajaxRequest.onreadystatechange = function() {
+          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
+            // Delete the <tr> identified by item_id
+            var child = document.getElementById(item_id);
+            child.parentNode.removeChild(child);
+          }
+        };
+        ajaxRequest.open('DELETE', 'entry/' + item_id);
+        ajaxRequest.send(null);
+      }
+    }
+
+    function reloadAsTable() {
+      window.location = "/?exp_traq_name={{ exp_traq_name }}&showAs=table";
+    }
+    function reloadAsList() {
+      window.location = "/?exp_traq_name={{ exp_traq_name }}";
+    }
+    </script>
+  </head>
+
+  <body>
+    <!-- PAGE HEADER -->
+    <div class="header">
+      {% if user %}
+        <span>{{ user }}</span>
+      {% endif %}
+      <span><a href="{{ url|safe }}">{{ url_linktext }}</a></span>
+    </div>
+    <!-- END PAGE HEADER -->
+
+    <!-- MAIN FORM -->
+    <div id="mainForm">
+      <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post">
+        <div>
+          Amount:
+          <input name="amount" type="number" step="1" required class="input-block-level" autofocus></input>
+        </div>
+        <div>
+          Payee:
+          <input name="payee" type="text" required class="input-block-level"></input>
+        </div>
+        <div id="dateField">
+          Date:
+          <input name="date" type="date" class="input-block-level"></input>
+        </div>
+        <div id="commentField">
+          Comment:
+          <input name="comment" type="text" class="input-block-level" rows="2"></textarea>
+        </div>        
+        <div>
+          <span id="dateDefault" class="actionLink" onclick="showDateField()">Add date</span>
+          <span id="commentDefault" class="actionLink" onclick="showCommentField()">Add comment</span>
+        </div>
+        <div><input id="saveEntryBtn" type="submit" class="btn btn-large btn-primary" value="Save"></div>
+      </form>
+    </div>
+    <!-- END MAIN FORM -->
+
+    <!-- DATA TABLE -->
+    <!-- *********** NOTE: icons from https://design.google.com/icons/ **************** -->
+    <div id="data">
+      {% if show_as_table %}
+
+        <span id="showAsList" class="actionLink" onclick="reloadAsList()">Show as a list</span>
+        <table id="dataTable">
+          <tr>
+            <th>Date</th>
+            <th>Datetime</th>
+            <th>Amount</th>
+            <th>Payee</th>
+            <th>Comment</th>
+            <th>Submitter</th>
+            <th>Timestamp (UTC)</th>
+          </tr>
+          {% for entry in entries %}
+          <tr>
+            <td>{{ entry.dateOnly }}</td>
+            <td>{{ entry.datetime }}</td>
+            <td style="text-align: right">${{ entry.amount }}</td>
+            <td>{{ entry.payee }}</td>
+            <td>{{ entry.comment }}</td>
+            <td>{{ entry.author.email }}</td>
+            <td>{{ entry.timestamp }}</td>
+          </tr>
+          {% endfor %}
+        </table>        
+      
+      {% else %}
+
+        <span id="showAsTable" class="actionLink" onclick="reloadAsTable()">Show as a table</span>
+        {% for entry in entries %}
+        <div id="{{ entry.key.urlsafe() }}" class="dataEntry">
+          {{ entry.dateOnly }} <i class="material-icons md-16">lens</i> 
+          ${{ entry.amount }} <i class="material-icons md-16">lens</i> 
+          {{ entry.payee }} <i class="material-icons md-16">lens</i>  
+          {{ entry.comment }}
+          <span class="actionLink" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</span>
+        </div>
+        {% endfor %}
+
+      {% endif %}
+    </div>
+    <!-- END DATA TABLE -->
+
+    <!-- TRACKER INSTANCE PICKER -->
+    <form class="tracker">Exp traq name:
+      <input value="{{ exp_traq_name }}" name="exp_traq_name">
+      <input type="submit" value="Switch">
+    </form>
+    <!-- END TRACKER INSTANCE PICKER -->
+
+  </body>
+</html>
+{% endautoescape %}

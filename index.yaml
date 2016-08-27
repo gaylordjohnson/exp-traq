@@ -1,0 +1,8 @@
+indexes:
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: datetime
+    direction: desc
+  - name: timestamp
+    direction: desc
