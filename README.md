@@ -1,25 +1,19 @@
-RM notes to self:
+## RM notes to self:
 
 To start dev server
 1. go to local dir
 2. run:
-/home/blah/Documents/maksim-code/google_appengine/dev_appserver.py ./
+/home/blah/Documents/my-code/google_appengine/dev_appserver.py ./
 
 To deploy
 1. go to local dir
 2. run:
-/home/blah/Documents/maksim-code/google_appengine/appcfg.py -A exp-traq -V v1 update ./
+/home/blah/Documents/my-code/google_appengine/appcfg.py -A exp-traq -V v1 update ./
 
 --------------------------
 
 
-# Guestbook
-
-Guestbook is an example application showing basic usage of Google App
-Engine. Users can read & write text messages and optionaly log-in with
-their Google account. Messages are stored in App Engine (NoSQL)
-High Replication Datastore (HRD) and retrieved using a strongly consistent
-(ancestor) query.
+# Exp-traq
 
 ## Products
 - [App Engine][1]
@@ -34,7 +28,6 @@ High Replication Datastore (HRD) and retrieved using a strongly consistent
 ## Dependencies
 - [webapp2][5]
 - [jinja2][6]
-- [Twitter Bootstrap][7]
 
 [1]: https://developers.google.com/appengine
 [2]: https://python.org
@@ -42,6 +35,5 @@ High Replication Datastore (HRD) and retrieved using a strongly consistent
 [4]: https://developers.google.com/appengine/docs/python/users/
 [5]: http://webapp-improved.appspot.com/
 [6]: http://jinja.pocoo.org/docs/
-[7]: http://twitter.github.com/bootstrap/
 
 
