@@ -115,21 +115,21 @@
         <table id="dataTable">
           <tr>
             <th>Date</th>
-            <th>Datetime</th>
             <th>Amount</th>
             <th>Payee</th>
             <th>Comment</th>
             <th>Submitter</th>
+            <th>Datetime</th>
             <th>Timestamp (UTC)</th>
           </tr>
           {% for entry in entries %}
           <tr>
             <td>{{ entry.dateOnly }}</td>
-            <td>{{ entry.datetime }}</td>
             <td style="text-align: right">${{ entry.amount }}</td>
             <td>{{ entry.payee }}</td>
             <td>{{ entry.comment }}</td>
             <td>{{ entry.author.email }}</td>
+            <td>{{ entry.datetime }}</td>
             <td>{{ entry.timestamp }}</td>
           </tr>
           {% endfor %}
