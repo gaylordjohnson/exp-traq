@@ -100,6 +100,7 @@ class MainPage(webapp2.RequestHandler):
             'show_as_table': show_as_table,
             'user': user,
             'entries': entries,
+            'numEntries': len(entries),
             'exp_traq_name': urllib.quote_plus(exp_traq_name),
             'url': url,
             'url_linktext': url_linktext,
