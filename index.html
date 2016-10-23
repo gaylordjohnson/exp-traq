@@ -28,6 +28,15 @@
       commentField.focus();
     }
 
+    function showChangeTraq() {
+      document.getElementById('expTraqDefaultView').style.display = 'none';
+      document.getElementById('expTraqChangeBtn').style.display = 'none';
+      
+      var form = document.getElementById('changeTraqForm');
+      form.style.display = 'block';
+      form.focus();
+    }
+
     function deleteEntry(item_id) {
       var okToDelete = confirm("OK to delete entry?");
       if (okToDelete == true) {
@@ -59,7 +68,13 @@
       {% if user %}
         <span>{{ user }}</span>
       {% endif %}
-      <span><a href="{{ url|safe }}">{{ url_linktext }}</a></span>
+      <span><a href="{{ url|safe }}">{{ url_linktext }}</a></span><br>
+      <span id="expTraqDefaultView">Exp traq: {{exp_traq_name}}</span> <span id="expTraqChangeBtn" class="actionLink" onclick="showChangeTraq()">Change</span>
+      <!-- Form initially hidden; see CSS -->
+      <form id="changeTraqForm" class="tracker">Change exp traq to:
+        <input value="{{ exp_traq_name }}" name="exp_traq_name">
+        <input id="changeExpTraqBtn" type="submit" class="btn btn-large btn-primary" value="OK">
+      </form>
     </div>
     <!-- END PAGE HEADER -->
 
@@ -74,11 +89,11 @@
           Payee:
           <input name="payee" type="text" required class="input-block-level"></input>
         </div>
-        <div id="dateField">
+        <div id="dateField"> <!-- initially hidden; see CSS -->
           Date:
           <input name="date" type="date" class="input-block-level"></input>
         </div>
-        <div id="commentField">
+        <div id="commentField"> <!-- initially hidden; see CSS -->
           Comment:
           <input name="comment" type="text" class="input-block-level" rows="2"></textarea>
         </div>        
@@ -136,14 +151,6 @@
       {% endif %}
     </div>
     <!-- END DATA TABLE -->
-
-    <!-- TRACKER INSTANCE PICKER -->
-    <form class="tracker">Exp traq name:
-      <input value="{{ exp_traq_name }}" name="exp_traq_name">
-      <input type="submit" value="Switch">
-    </form>
-    <!-- END TRACKER INSTANCE PICKER -->
-
   </body>
 </html>
 {% endautoescape %}

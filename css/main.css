@@ -24,7 +24,7 @@ a {
 form {
   margin-top: 10px;
 }
-#dateField, #commentField {
+#dateField, #commentField, #changeTraqForm {
   display: none;
 }
 #saveEntryBtn {
