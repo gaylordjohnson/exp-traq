@@ -1,3 +1,6 @@
+# Let's make a bunch of test changes here
+1. test change in upstream/master -Blah
+
 ## RM notes to self:
 
 To start dev server
@@ -11,8 +14,6 @@ To deploy
 /home/blah/Documents/my-code/google_appengine/appcfg.py -A exp-traq -V v1 update ./
 
 --------------------------
-
-blah blah by gaylordjohnson - surprised I can actually make the change inline w/o restrictions! glj
 
 # Exp-traq
 
