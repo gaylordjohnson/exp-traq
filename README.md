@@ -1,6 +1,7 @@
 ## Let's make a bunch of test changes here
 1. test change in upstream/master -Blah
 2. test change in local master of fork -GLJ
+3. test change in local master of upstream -Blah
 
 ------------------------------
 ## RM notes to self:
