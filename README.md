@@ -1,6 +1,8 @@
-# Let's make a bunch of test changes here
+## Let's make a bunch of test changes here
 1. test change in upstream/master -Blah
+2. test change in local master of fork -GLJ
 
+------------------------------
 ## RM notes to self:
 
 To start dev server
