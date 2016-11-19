@@ -2,7 +2,7 @@
 1. test change in upstream/master -Blah
 2. test change in local master of fork -GLJ
 3. test change in local master of upstream -Blah
-GLJ MERGED: line 4: test change in local master of fork -GLJ <---> new code 4 - Blah
+4. GLJ MERGED stuff!
 
 ------------------------------
 ## RM notes to self:
