@@ -2,6 +2,7 @@
 1. test change in upstream/master -Blah
 2. test change in local master of fork -GLJ
 3. test change in local master of upstream -Blah
+new code 4 - Blah
 
 ------------------------------
 ## RM notes to self:
