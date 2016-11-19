@@ -3,6 +3,7 @@
 2. test change in local master of fork -GLJ
 3. test change in local master of upstream -Blah
 4. GLJ MERGED stuff!
+5. new feature - Blah
 
 ------------------------------
 ## RM notes to self:
