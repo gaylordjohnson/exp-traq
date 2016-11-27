@@ -36,11 +36,10 @@
           Payee:
           <input id="input_field" class="input-block-level" name="payee" onkeyup="inputChanged(this)" type="text" required></input>
           <div id="select_box">
-            <a href="#" onclick="optionSelect(this)">Volvo</a>
-            <a href="#" onclick="optionSelect(this)">Saab</a>
-            <a href="#" onclick="optionSelect(this)">Opel</a>
-            <a href="#" onclick="optionSelect(this)">Zhiguli</a>
-            <a href="#" onclick="optionSelect(this)">Mazda</a>
+            {% for uniquePayee in uniquePayees %}
+              <!-- NOTE: see xx comment in .py file about these not being sorted -->
+              <a href="#" onclick="optionSelect(this)">{{ uniquePayee }}</a>
+            {% endfor %}
           </div>
         </div>
         <div id="dateField"> <!-- initially hidden; see CSS -->
