@@ -28,6 +28,16 @@ def exp_traq_key(exp_traq_name=DEFAULT_EXP_TRAQ_NAME):
     """Constructs a Datastore key for an exp-treq entity. We use exp_traq_name as the key."""
     return ndb.Key('Exp-traq', exp_traq_name)
 
+def getPayees(entries):
+    "Initialize the payees list with a sorted list of unique payees from the list of all entries"
+    rawPayees = []
+    for entry in entries:
+        rawPayees.append(entry.payee)
+    # Converting to a set and then to a list removes duplicates and sorts
+    # BUG: not properly sorting, because strings are in unicode. See comment further down below...
+    return list(set(rawPayees))
+
+
 class Author(ndb.Model):
     """Sub model for representing an author."""
     identity = ndb.StringProperty(indexed=False)
@@ -95,11 +105,16 @@ class MainPage(webapp2.RequestHandler):
             entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
             entry.dateOnly = datetime.datetime.strftime(entry.datetime, '%a %Y-%m-%d')
 
+        # xx NOTE :-( Supposed to return sorted list, BUT the strings are unicode, and the list is comes out not sorted.
+        # I searched for a while how to sort unicode strings, but it's more work than I was willing to put in
+        # at 23:30 on a Sat, so I gave up.
+        payees = getPayees(entries)
 
         template_values = {
             'show_as_table': show_as_table,
             'user': user,
             'entries': entries,
+            'uniquePayees': payees,
             'numEntries': len(entries),
             'exp_traq_name': urllib.quote_plus(exp_traq_name),
             'url': url,
