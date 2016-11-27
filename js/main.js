@@ -1,6 +1,4 @@
 /* stuff related to the autocomplete dropdown */
-// var inputField = document.getElementById('input_field');
-// var selectBox = document.getElementById('select_box');
 
 // Declare as globals. We'll init them when document has loaded.
 // NOTE this is an overkill, because I can just call getElementById when needed
