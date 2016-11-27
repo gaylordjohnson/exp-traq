@@ -1,3 +1,29 @@
+/* Stuff related to the autocomplete dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+#select_box {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+#select_box a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+#select_box a:hover {
+  background-color: #f1f1f1
+}
+/*------------------*/
+
 body {
   font-family: sans-serif;
 }
@@ -49,7 +75,6 @@ td, th {
   border: 1px solid LightGray;
   padding: 0px 7px 0px 7px;
 }
-
 .dataEntry {
   /*border: 1px solid LightGray;*/
   margin-top: 10px;
