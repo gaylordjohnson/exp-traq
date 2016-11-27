@@ -1,3 +1,41 @@
+/* stuff related to the autocomplete dropdown */
+// var inputField = document.getElementById('input_field');
+// var selectBox = document.getElementById('select_box');
+
+// Declare as globals. We'll init them when document has loaded.
+// NOTE this is an overkill, because I can just call getElementById when needed
+// BUT doing this for learning purposes (and maybe some minor efficiency gain...)
+var inputField;
+var selectBox;
+document.addEventListener("DOMContentLoaded", function(event) {
+  inputField = document.getElementById('input_field');
+  selectBox = document.getElementById('select_box');
+});
+
+function inputChanged(context) {
+  var val = context.value.toLowerCase();
+  if(val === '') {
+    selectBox.style.display = 'none';
+    return;
+  }
+  for (var i = 0; i < selectBox.children.length; i++) {
+    var item = selectBox.children[i];
+    if(item.innerHTML.toLowerCase().indexOf(val) >= 0) {
+      item.style.display = 'block';
+      selectBox.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }   
+  }
+}
+  
+function optionSelect(context) {
+  var val = context.innerHTML;
+  inputField.value = val;
+  selectBox.style.display = 'none';
+}
+/* ------------------------------------------ */
+
 function showDateField() {
   document.getElementById('dateDefault').style.display = 'none';
   

@@ -27,14 +27,21 @@
 
     <!-- MAIN FORM -->
     <div id="mainForm">
-      <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post">
+      <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post" autocomplete="off">
         <div>
           Amount:
           <input name="amount" type="number" step="1" required class="input-block-level" autofocus></input>
         </div>
-        <div>
+        <div class="dropdown">
           Payee:
-          <input name="payee" type="text" required class="input-block-level"></input>
+          <input id="input_field" class="input-block-level" name="payee" onkeyup="inputChanged(this)" type="text" required></input>
+          <div id="select_box">
+            <a href="#" onclick="optionSelect(this)">Volvo</a>
+            <a href="#" onclick="optionSelect(this)">Saab</a>
+            <a href="#" onclick="optionSelect(this)">Opel</a>
+            <a href="#" onclick="optionSelect(this)">Zhiguli</a>
+            <a href="#" onclick="optionSelect(this)">Mazda</a>
+          </div>
         </div>
         <div id="dateField"> <!-- initially hidden; see CSS -->
           Date:
