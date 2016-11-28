@@ -91,13 +91,6 @@ class MainPage(webapp2.RequestHandler):
         entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
         entries = entries_query.fetch()
 
-        #xx
-        # header row of the csv output
-        # exportRows
-        # print "entry.key.parent().id(),entry.key.urlsafe(),entry.payee"
-        # for entry in entries:
-        #     print entry.key.parent().id() + "," + entry.key.urlsafe() + ",\"" + entry.payee + "\""
-
         user = users.get_current_user()
         if user:
             url = users.create_logout_url(self.request.uri)
