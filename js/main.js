@@ -75,10 +75,3 @@ function deleteEntry(item_id) {
     ajaxRequest.send(null);
   }
 }
-
-function reloadAsTable() {
-  window.location = "/?exp_traq_name={{ exp_traq_name }}&showAs=table";
-}
-function reloadAsList() {
-  window.location = "/?exp_traq_name={{ exp_traq_name }}";
-}

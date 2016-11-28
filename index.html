@@ -7,6 +7,15 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- GOOGLE ICON FONTS -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="/js/main.js"></script>
+    <script>
+      // Pulled this back into the HTML because it uses the jinja preprocessing, so easiest was to move this back into this file.
+      function reloadAsTable() {
+        window.location = "/?exp_traq_name={{ exp_traq_name }}&showAs=table";
+      }
+      function reloadAsList() {
+        window.location = "/?exp_traq_name={{ exp_traq_name }}";
+      }
+    </script>
   </head>
 
   <body>
@@ -74,6 +83,7 @@
             <th>Submitter</th>
             <th>Datetime</th>
             <th>Timestamp (UTC)</th>
+            <th>Urlsafe NDB key</th>
           </tr>
           {% for entry in entries %}
           <tr>
@@ -84,6 +94,7 @@
             <td>{{ entry.author.email }}</td>
             <td>{{ entry.datetime }}</td>
             <td>{{ entry.timestamp }}</td>
+            <td>{{ entry.key.urlsafe() }}</td>
           </tr>
           {% endfor %}
         </table>        
