@@ -38,21 +38,20 @@ def getPayees(entries):
     return list(set(rawPayees))
 
 def runMigration():
-    print "Running migration"
     changes = [
         # [<urlsafe key>,<new payee>,<new comment>]
         # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
         # NOTE2: Set value to "" if want it empty.
         # NOTE3: payee can't be an empty string
-#["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","New payee","New comment"],        
-#["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","Another updated payee",""],
+["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","BLAH PAYEE 2"],        
+["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDArwoM","BLAH PAYEE 3"],
     ]
+    print "Running migration (" + str(len(changes)) + " items):"
     for change in changes:
         print change
         key = ndb.Key(urlsafe = change[0])
         entry = key.get()
         entry.payee = change[1]
-        entry.comment = change[2]
         entry.put()
 
 class Author(ndb.Model):
