@@ -37,6 +37,22 @@ def getPayees(entries):
     # BUG: not properly sorting, because strings are in unicode. See comment further down below...
     return list(set(rawPayees))
 
+def runMigration():
+    changes = [
+        # [<urlsafe key>,<new payee>,<new comment>]
+        # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
+        # NOTE2: Set value to "" if want it empty.
+        # NOTE3: payee can't be an empty string
+# ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","BLAH PAYEE 2"],        
+# ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDArwoM","BLAH PAYEE 3"],
+    ]
+    print "Running migration (" + str(len(changes)) + " items):"
+    for change in changes:
+        print change
+        key = ndb.Key(urlsafe = change[0])
+        entry = key.get()
+        entry.payee = change[1]
+        entry.put()
 
 class Author(ndb.Model):
     """Sub model for representing an author."""
@@ -84,10 +100,15 @@ class MainPage(webapp2.RequestHandler):
 
     def get(self):
         exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
+        
         if self.request.get('showAs') == 'table':
             show_as_table = True
         else:
             show_as_table = False
+        
+        if self.request.get('runMigration') == 'true':
+            runMigration()
+
         entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
         entries = entries_query.fetch()
 
