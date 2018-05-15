@@ -8,6 +8,18 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
+- url: /apple-touch-icon\.png
+  static_files: apple-touch-icon.png
+  upload: apple-touch-icon\.png
+
+- url: /favicon-32x32\.png
+  static_files: favicon-32x32.png
+  upload: favicon-32x32\.png
+
+- url: /favicon-16x16\.png
+  static_files: favicon-16x16.png
+  upload: favicon-16x16\.png
+
 - url: /css
   static_dir: css
 
