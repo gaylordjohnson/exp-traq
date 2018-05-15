@@ -1,26 +1,21 @@
-## Let's make a bunch of test changes here
-1. test change in upstream/master -Blah
-2. test change in local master of fork -GLJ
-3. test change in local master of upstream -Blah
-4. GLJ MERGED stuff!
-5. new feature - Blah
-
-------------------------------
-## RM notes to self:
-
-To start dev server
-1. go to local dir
-2. run:
-/home/blah/Documents/my-code/google_appengine/dev_appserver.py ./
-
-To deploy
-1. go to local dir
-2. run:
-/home/blah/Documents/my-code/google_appengine/appcfg.py -A exp-traq -V v1 update ./
-
---------------------------
-
 # Exp-traq
+
+## Cheat sheet for me:
+
+View info about current project:
+$ gcloud info
+
+Configure default project:
+$ gcloud init 
+...and follow prompts (e.g. which login you want to use, which project to apply commands to, etc.). Super easy!
+
+Run project locally:
+$ dev_appserver.py ./
+
+Deploy project to Google Cloud:
+$ gcloud app deploy
+...and follow prompts
+
 
 ## Products
 - [App Engine][1]
@@ -42,5 +37,3 @@ To deploy
 [4]: https://developers.google.com/appengine/docs/python/users/
 [5]: http://webapp-improved.appspot.com/
 [6]: http://jinja.pocoo.org/docs/
-
-
