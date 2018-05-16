@@ -16,9 +16,6 @@ Deploy project to Google Cloud:
 $ gcloud app deploy
 ...and follow prompts
 
-## Blah
-...testing a change after I've deleted RM's exp-traq project and made Gaylord's project be the main one. Also deleted and recloned the repo on my mac. 
-
 ## Products
 - [App Engine][1]
 

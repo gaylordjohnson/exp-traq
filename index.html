@@ -45,9 +45,18 @@
         <div>
           <p class="text-right" id="expTraqDefaultView">Exp traq: {{exp_traq_name}} <a href="#" id="expTraqChangeBtn" onclick="showChangeTraq()">Change</a></p>
           <!-- Form initially hidden; see CSS -->
-          <form id="changeTraqForm" class="tracker">Change exp traq to:
-            <input value="{{ exp_traq_name }}" name="exp_traq_name">
-            <input id="changeExpTraqBtn" type="submit" class="btn btn-primary btn-sm" value="OK">
+          <form id="changeTraqForm" class="tracker">
+            <div class="form-row d-flex justify-content-end">
+              <div>
+                <label>Change exp traq to</label>
+              </div>
+              <div class="col-4">
+                <input class="form-control" value="{{ exp_traq_name }}" name="exp_traq_name">
+              </div>
+              <div>
+                <button type="submit" class="btn btn-primary btn-sm float-right" id="changeExpTraqBtn">OK</button>
+              </div>
+            </div>
           </form>
         </div>
       </div>
@@ -57,36 +66,36 @@
       <div id="mainForm">
         <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post" autocomplete="off">
           <div class="form-group row">
-            <label class="col-2 col-form-label col-form-label">Amount</label>
+            <label class="col-2 col-form-label">Amount</label>
             <div class="col-10">
-              <input class="form-control form-control" name="amount" type="number" step="1" required autofocus>
+              <input class="form-control" name="amount" type="number" step="1" required autofocus>
             </div>
           </div>
 
           <div class="form-group row dropdown">
-            <label class="col-2 col-form-label col-form-label">Payee</label>
+            <label class="col-2 col-form-label">Payee</label>
             <div class="col-10">
-              <input class="form-control form-control" id="input_field" name="payee" type="text" required onkeyup="inputChanged(this)">
-<!--               <div id="select_box">
+              <input class="form-control" id="input_field" name="payee" type="text" required onkeyup="inputChanged(this)">
+              <div id="select_box">
                 {% for uniquePayee in uniquePayees %}
                   <a href="#" onclick="optionSelect(this)">{{ uniquePayee }}</a>
                 {% endfor %}
               </div>
- -->
+
             </div>
           </div>
 
           <div class="form-group row" id="dateField"> <!-- initially hidden; see CSS -->
-            <label class="col-2 col-form-label col-form-label">Date</label>
+            <label class="col-2 col-form-label">Date</label>
             <div class="col-10">
-              <input class="form-control form-control" name="date" type="date">
+              <input class="form-control" name="date" type="date">
             </div>
           </div>
 
           <div class="form-group row" id="commentField"> <!-- initially hidden; see CSS -->
-            <label class="col-2 col-form-label col-form-label">Notes</label>
+            <label class="col-2 col-form-label">Note</label>
             <div class="col-10">
-              <textarea class="form-control form-control" name="comment" rows="2"></textarea>
+              <textarea class="form-control" name="comment" rows="2"></textarea>
             </div>
           </div>
 
@@ -94,7 +103,7 @@
             <div class="col-2"></div>
             <div class="col-10">
               <a href="#" id="dateDefault" onclick="showDateField()">Add date</a>&nbsp;&nbsp;
-              <a href="#" id="commentDefault" onclick="showCommentField()">Add notes</a>
+              <a href="#" id="commentDefault" onclick="showCommentField()">Add note</a>
             </div>
           </div>
 
