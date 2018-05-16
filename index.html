@@ -4,14 +4,21 @@
   <head>
     <title>Exp Traq - {{exp_traq_name}}</title>
     
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <!-- favicon stuff; see README_favicon.md -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 
+    <!-- Bootstrap CSS. Must come first -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
     <link type="text/css" rel="stylesheet" href="/css/main.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- GOOGLE ICON FONTS -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <script src="/js/main.js"></script>
     <script>
       // Pulled this back into the HTML because it uses the jinja preprocessing, so easiest was to move this back into this file.
@@ -25,103 +32,139 @@
   </head>
 
   <body>
-    <!-- PAGE HEADER -->
-    <div class="header">
-      {% if user %}
-        <span>{{ user }}</span>
-      {% endif %}
-      <span><a href="{{ url|safe }}">{{ url_linktext }}</a></span><br>
-      <span id="expTraqDefaultView">Exp traq: {{exp_traq_name}}</span> <span id="expTraqChangeBtn" class="actionLink" onclick="showChangeTraq()">Change</span>
-      <!-- Form initially hidden; see CSS -->
-      <form id="changeTraqForm" class="tracker">Change exp traq to:
-        <input value="{{ exp_traq_name }}" name="exp_traq_name">
-        <input id="changeExpTraqBtn" type="submit" class="btn btn-large btn-primary" value="OK">
-      </form>
-    </div>
-    <!-- END PAGE HEADER -->
+    <div class="container">
 
-    <!-- MAIN FORM -->
-    <div id="mainForm">
-      <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post" autocomplete="off">
-        <div>
-          Amount:
-          <input name="amount" type="number" step="1" required class="input-block-level" autofocus></input>
+      <!-- PAGE HEADER -->
+      <div class="header">
+        <div class="text-right">
+          {% if user %}
+            <span>{{ user }}</span>
+          {% endif %}
+          <a href="{{ url|safe }}">{{ url_linktext }}</a>
         </div>
-        <div class="dropdown">
-          Payee:
-          <input id="input_field" class="input-block-level" name="payee" onkeyup="inputChanged(this)" type="text" required></input>
-          <div id="select_box">
-            {% for uniquePayee in uniquePayees %}
-              <!-- NOTE: see xx comment in .py file about these not being sorted -->
-              <a href="#" onclick="optionSelect(this)">{{ uniquePayee }}</a>
-            {% endfor %}
+        <div>
+          <p class="text-right" id="expTraqDefaultView">Exp traq: {{exp_traq_name}} <a href="#" id="expTraqChangeBtn" onclick="showChangeTraq()">Change</a></p>
+          <!-- Form initially hidden; see CSS -->
+          <form id="changeTraqForm" class="tracker">Change exp traq to:
+            <input value="{{ exp_traq_name }}" name="exp_traq_name">
+            <input id="changeExpTraqBtn" type="submit" class="btn btn-primary btn-sm" value="OK">
+          </form>
+        </div>
+      </div>
+      <!-- END PAGE HEADER -->
+
+      <!-- MAIN FORM -->    
+      <div id="mainForm">
+        <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post" autocomplete="off">
+          <div class="form-group row">
+            <label class="col-2 col-form-label col-form-label">Amount</label>
+            <div class="col-10">
+              <input class="form-control form-control" name="amount" type="number" step="1" required autofocus>
+            </div>
           </div>
-        </div>
-        <div id="dateField"> <!-- initially hidden; see CSS -->
-          Date:
-          <input name="date" type="date" class="input-block-level"></input>
-        </div>
-        <div id="commentField"> <!-- initially hidden; see CSS -->
-          Comment:
-          <input name="comment" type="text" class="input-block-level" rows="2"></textarea>
-        </div>        
-        <div>
-          <span id="dateDefault" class="actionLink" onclick="showDateField()">Add date</span>
-          <span id="commentDefault" class="actionLink" onclick="showCommentField()">Add comment</span>
-        </div>
-        <div><input id="saveEntryBtn" type="submit" class="btn btn-large btn-primary" value="Save"></div>
-      </form>
-    </div>
-    <!-- END MAIN FORM -->
 
-    <!-- DATA TABLE -->
-    <!-- *********** NOTE: icons from https://design.google.com/icons/ **************** -->
-    <div id="data">
-      {% if show_as_table %}
+          <div class="form-group row dropdown">
+            <label class="col-2 col-form-label col-form-label">Payee</label>
+            <div class="col-10">
+              <input class="form-control form-control" id="input_field" name="payee" type="text" required onkeyup="inputChanged(this)">
+<!--               <div id="select_box">
+                {% for uniquePayee in uniquePayees %}
+                  <a href="#" onclick="optionSelect(this)">{{ uniquePayee }}</a>
+                {% endfor %}
+              </div>
+ -->
+            </div>
+          </div>
 
-        <span id="showAsList" class="actionLink" onclick="reloadAsList()">Show as a list</span>
-        <table id="dataTable">
-          <tr>
-            <th>Date</th>
-            <th>Amount</th>
-            <th>Payee</th>
-            <th>Comment</th>
-            <th>Submitter</th>
-            <th>Datetime</th>
-            <th>Timestamp (UTC)</th>
-            <th>Urlsafe NDB key</th>
-          </tr>
+          <div class="form-group row" id="dateField"> <!-- initially hidden; see CSS -->
+            <label class="col-2 col-form-label col-form-label">Date</label>
+            <div class="col-10">
+              <input class="form-control form-control" name="date" type="date">
+            </div>
+          </div>
+
+          <div class="form-group row" id="commentField"> <!-- initially hidden; see CSS -->
+            <label class="col-2 col-form-label col-form-label">Notes</label>
+            <div class="col-10">
+              <textarea class="form-control form-control" name="comment" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-2"></div>
+            <div class="col-10">
+              <a href="#" id="dateDefault" onclick="showDateField()">Add date</a>&nbsp;&nbsp;
+              <a href="#" id="commentDefault" onclick="showCommentField()">Add notes</a>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm float-right">Save</button>
+
+        </form>          
+      </div>
+      <!-- END MAIN FORM -->
+
+      <!-- DATA TABLE -->
+      <div id="data">
+        {{ numEntries }} entries | 
+        
+        {% if show_as_table %}
+
+          <a href="#" id="showAsList" onclick="reloadAsList()">Show as a list</a>
+          <table class="table table-sm table-bordered" id="dataTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Payee</th>
+                <th>Comment</th>
+                <th>Submitter</th>
+                <th>Datetime</th>
+                <th>Timestamp (UTC)</th>
+                <th>Urlsafe NDB key</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in entries %}
+              <tr>
+                <td>{{ entry.dateOnly }}</td>
+                <td style="text-align: right">${{ entry.amount }}</td>
+                <td>{{ entry.payee }}</td>
+                <td>{{ entry.comment }}</td>
+                <td>{{ entry.author.email }}</td>
+                <td>{{ entry.datetime }}</td>
+                <td>{{ entry.timestamp }}</td>
+                <td>{{ entry.key.urlsafe() }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>        
+        
+        {% else %}
+
+          <a href="#" id="showAsTable" onclick="reloadAsTable()">Show as a table</a>
           {% for entry in entries %}
-          <tr>
-            <td>{{ entry.dateOnly }}</td>
-            <td style="text-align: right">${{ entry.amount }}</td>
-            <td>{{ entry.payee }}</td>
-            <td>{{ entry.comment }}</td>
-            <td>{{ entry.author.email }}</td>
-            <td>{{ entry.datetime }}</td>
-            <td>{{ entry.timestamp }}</td>
-            <td>{{ entry.key.urlsafe() }}</td>
-          </tr>
+          <div id="{{ entry.key.urlsafe() }}" class="entry">
+            <!-- NOTE: icons from https://design.google.com/icons/ -->
+            {{ entry.dateOnly }} <i class="material-icons md-16">lens</i> 
+            ${{ entry.amount }} <i class="material-icons md-16">lens</i> 
+            {{ entry.payee }} <i class="material-icons md-16">lens</i>  
+            {{ entry.comment }}
+            <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a>
+          </div>
           {% endfor %}
-        </table>        
-      
-      {% else %}
 
-        <span id="showAsTable" class="actionLink" onclick="reloadAsTable()">Show as a table</span>
-        {% for entry in entries %}
-        <div id="{{ entry.key.urlsafe() }}" class="dataEntry">
-          {{ entry.dateOnly }} <i class="material-icons md-16">lens</i> 
-          ${{ entry.amount }} <i class="material-icons md-16">lens</i> 
-          {{ entry.payee }} <i class="material-icons md-16">lens</i>  
-          {{ entry.comment }}
-          <span class="actionLink" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</span>
-        </div>
-        {% endfor %}
+        {% endif %}
+      </div>
+      <!-- END DATA TABLE -->
 
-      {% endif %}
-    </div>
-    <!-- END DATA TABLE -->
-    {{ numEntries }} entries
+    </div> <!-- container -->
+    
+    <!-- Bootstrap's JS. Should be at end of body -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
   </body>
 </html>
 {% endautoescape %}

@@ -38,7 +38,7 @@ function showDateField() {
   document.getElementById('dateDefault').style.display = 'none';
   
   var dateField = document.getElementById('dateField');
-  dateField.style.display = 'block';
+  dateField.style.display = 'flex';
   dateField.click();
   dateField.focus();
 }
@@ -47,7 +47,7 @@ function showCommentField() {
   document.getElementById('commentDefault').style.display = 'none';
   
   var commentField = document.getElementById('commentField');
-  commentField.style.display = 'block';
+  commentField.style.display = 'flex';
   commentField.focus();
 }
 
