@@ -36,19 +36,14 @@ function optionSelect(context) {
 
 function showDateField() {
   document.getElementById('dateDefault').style.display = 'none';
-  
-  var dateField = document.getElementById('dateField');
-  dateField.style.display = 'flex';
-  dateField.click();
-  dateField.focus();
+  document.getElementById('dateField').style.display = 'flex';
+  document.getElementById('dateInput').focus();
 }
 
 function showCommentField() {
   document.getElementById('commentDefault').style.display = 'none';
-  
-  var commentField = document.getElementById('commentField');
-  commentField.style.display = 'flex';
-  commentField.focus();
+  document.getElementById('commentField').style.display = 'flex';
+  document.getElementById('commentInput').focus();
 }
 
 function showChangeTraq() {

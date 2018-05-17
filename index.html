@@ -1,6 +1,6 @@
-<!DOCTYPE html>
+<!doctype html>
 {% autoescape true %}
-<html>
+<html lang="en">
   <head>
     <title>Exp Traq - {{exp_traq_name}}</title>
     
@@ -88,14 +88,14 @@
           <div class="form-group row" id="dateField"> <!-- initially hidden; see CSS -->
             <label class="col-2 col-form-label">Date</label>
             <div class="col-10">
-              <input class="form-control" name="date" type="date">
+              <input class="form-control" name="date" type="date" id="dateInput">
             </div>
           </div>
 
           <div class="form-group row" id="commentField"> <!-- initially hidden; see CSS -->
             <label class="col-2 col-form-label">Note</label>
             <div class="col-10">
-              <textarea class="form-control" name="comment" rows="2"></textarea>
+              <textarea class="form-control" name="comment" rows="2" id="commentInput"></textarea>
             </div>
           </div>
 
@@ -151,10 +151,10 @@
         
         {% else %}
 
+          <!-- NOTE: icons below are from https://design.google.com/icons/ -->
           <a href="#" id="showAsTable" onclick="reloadAsTable()">Show as a table</a>
           {% for entry in entries %}
           <div id="{{ entry.key.urlsafe() }}" class="entry">
-            <!-- NOTE: icons from https://design.google.com/icons/ -->
             {{ entry.dateOnly }} <i class="material-icons md-16">lens</i> 
             ${{ entry.amount }} <i class="material-icons md-16">lens</i> 
             {{ entry.payee }} <i class="material-icons md-16">lens</i>  
