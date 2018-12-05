@@ -101,8 +101,15 @@ class EasternTZInfo(datetime.tzinfo):
 
 class MainPage(webapp2.RequestHandler):
   def get(self):
-    log_msg = '' # For passing debug info to the browser
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
+
+    fetchLimit = 10 # Default value - this makes load time much speedier than loading everything
+    showArg = self.request.get('show')
+    if showArg:
+      if showArg == 'all':
+        fetchLimit = None
+      else:
+        fetchLimit = int(showArg)
     
     if self.request.get('showAs') == 'table':
       show_as_table = True
@@ -114,8 +121,8 @@ class MainPage(webapp2.RequestHandler):
     elif self.request.get('runMigration') == 'PayeeType':
       runPayeeTypeMigration(exp_traq_name)
 
-    entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
-    entries = entries_query.fetch()
+    entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
+    totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
 
     # Get list of unique payees
     # Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
@@ -124,7 +131,6 @@ class MainPage(webapp2.RequestHandler):
     payees = []
     for obj in payeeObjects:
       payees.append(obj.payee)
-    log_msg += '%d unique payees: %s' % (len(payees), str(payees))
 
     user = users.get_current_user()
     if user:
@@ -144,12 +150,11 @@ class MainPage(webapp2.RequestHandler):
       'show_as_table': show_as_table,
       'user': user,
       'entries': entries,
+      'totalEntries': totalEntries,
       'uniquePayees': payees,
-      'numEntries': len(entries),
       'exp_traq_name': urllib.quote_plus(exp_traq_name),
       'url': url,
       'url_linktext': url_linktext,
-      'log_msg': log_msg,
     }
 
     template = JINJA_ENVIRONMENT.get_template('index.html')

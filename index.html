@@ -22,13 +22,24 @@
     <script src="/js/main.js"></script>
     <script>
       // Pulled this back into the HTML because it uses the jinja preprocessing, so easiest was to move this back into this file.
-      console.log('Log msg from python: {{ log_msg }}');
+      // Maybe there's a way to do it in the js file, but I don't have time to figure it out
+
+      console.log('Showing {{ entries|count }} entries of {{ totalEntries }}');
+      console.log('{{ uniquePayees|count }} unique payees: {{ uniquePayees }}')
 
       function reloadAsTable() {
         window.location = "/?exp_traq_name={{ exp_traq_name }}&showAs=table";
       }
       function reloadAsList() {
         window.location = "/?exp_traq_name={{ exp_traq_name }}";
+      }
+      function reloadShowAll() {
+        let qs = '/?exp_traq_name={{ exp_traq_name }}';
+        {% if show_as_table %}
+          qs += '&showAs=table';
+        {% endif %}
+        qs += '&show=all'
+        window.location = qs
       }
     </script>
   </head>
@@ -117,7 +128,11 @@
 
       <!-- DATA TABLE -->
       <div id="data">
-        {{ numEntries }} entries | 
+        Showing {{ entries|count }} of {{ totalEntries }} entries |
+        
+        {% if entries|count < totalEntries %}
+          <a href="#" id="showAll" onclick="reloadShowAll()">Show all</a> |
+        {% endif %}
         
         {% if show_as_table %}
 
