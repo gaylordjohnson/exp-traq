@@ -6,3 +6,7 @@ indexes:
     direction: desc
   - name: timestamp
     direction: desc
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: payee

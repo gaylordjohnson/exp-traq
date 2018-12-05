@@ -28,16 +28,10 @@ def exp_traq_key(exp_traq_name=DEFAULT_EXP_TRAQ_NAME):
     """Constructs a Datastore key for an exp-treq entity. We use exp_traq_name as the key."""
     return ndb.Key('Exp-traq', exp_traq_name)
 
-def getPayees(entries):
-    "Initialize the payees list with a sorted list of unique payees from the list of all entries"
-    rawPayees = []
-    for entry in entries:
-        rawPayees.append(entry.payee)
-    # Converting to a set and then to a list removes duplicates and sorts
-    # BUG: not properly sorting, because strings are in unicode. See comment further down below...
-    return list(set(rawPayees))
-
-def runMigration():
+# Say, I messed up a payee name so now there are several different spellings, messing up my auto-suggest list
+# Run this migration, which takes a urlsafe key and what the payee should be changed to, for as many entries
+# as desired, and runs the update.
+def runPayeeContentMigration():
     changes = [
         # [<urlsafe key>,<new payee>,<new comment>]
         # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
@@ -54,6 +48,16 @@ def runMigration():
         entry.payee = change[1]
         entry.put()
 
+# First see my stackoverflow question for context: 
+#   https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
+# This migration takes all the old entries, reads them into the now updated class definition - where Entity.payee is indexed
+# - and writes entries right back to the datastore, changing them from unindexed to indexed! Ta da!
+def runPayeeTypeMigration(exp_traq_name):
+  entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
+  entries = entries_query.fetch()
+  for entry in entries:
+    entry.put()
+
 class Author(ndb.Model):
     """Sub model for representing an author."""
     identity = ndb.StringProperty(indexed=False)
@@ -63,7 +67,11 @@ class Entry(ndb.Model):
     """A main model for representing an individual expense entry."""
     datetime = ndb.DateTimeProperty(indexed=True, required=True)
     amount = ndb.IntegerProperty(indexed=False, required=True)
-    payee = ndb.StringProperty(indexed=False, required=True)
+    #payee = ndb.StringProperty(indexed=False, required=True)
+    # Changed to indexed, which is required to do a projection (see below)
+    # DAMN this was hard: see my Stackoverflow question, which I eventually figured out and answered myself:
+    # https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
+    payee = ndb.StringProperty(indexed=True, required=True) 
     comment = ndb.StringProperty(indexed=False)
 
     # Stuff to be populated automatically
@@ -97,8 +105,8 @@ class EasternTZInfo(datetime.tzinfo):
             return "EDT"
 
 class MainPage(webapp2.RequestHandler):
-
     def get(self):
+        log_msg = '' # For passing debug info to the browser
         exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
         
         if self.request.get('showAs') == 'table':
@@ -106,11 +114,22 @@ class MainPage(webapp2.RequestHandler):
         else:
             show_as_table = False
         
-        if self.request.get('runMigration') == 'true':
-            runMigration()
+        if self.request.get('runMigration') == 'PayeeContent':
+            runPayeeContentMigration()
+        elif self.request.get('runMigration') == 'PayeeType':
+            runPayeeTypeMigration(exp_traq_name)
 
         entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
         entries = entries_query.fetch()
+
+        # Get list of unique payees
+        # Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
+        # Therefore using obj.payee to access payee name
+        payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
+        payees = []
+        for obj in payeeObjects:
+          payees.append(obj.payee)
+        log_msg += '%d payees: %s' % (len(payees), str(payees))
 
         user = users.get_current_user()
         if user:
@@ -126,11 +145,6 @@ class MainPage(webapp2.RequestHandler):
             entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
             entry.dateOnly = datetime.datetime.strftime(entry.datetime, '%a %Y-%m-%d')
 
-        # xx NOTE :-( Supposed to return sorted list, BUT the strings are unicode, and the list is comes out not sorted.
-        # I searched for a while how to sort unicode strings, but it's more work than I was willing to put in
-        # at 23:30 on a Sat, so I gave up.
-        payees = getPayees(entries)
-
         template_values = {
             'show_as_table': show_as_table,
             'user': user,
@@ -140,11 +154,11 @@ class MainPage(webapp2.RequestHandler):
             'exp_traq_name': urllib.quote_plus(exp_traq_name),
             'url': url,
             'url_linktext': url_linktext,
+            'log_msg': log_msg,
         }
 
         template = JINJA_ENVIRONMENT.get_template('index.html')
         self.response.write(template.render(template_values))
-
 
 class SubmitEntry(webapp2.RequestHandler):
 
@@ -178,14 +192,12 @@ class SubmitEntry(webapp2.RequestHandler):
         query_params = {'exp_traq_name': exp_traq_name}
         self.redirect('/?' + urllib.urlencode(query_params))
 
-
 class DeleteEntry(webapp2.RequestHandler):
     """ Datastore reference https://cloud.google.com/appengine/docs/python/ndb/creating-entities """
     def delete(self, param1):
         # param1 contains id of entry to delete
         entry_key = ndb.Key(urlsafe=param1)
         entry_key.delete()
-
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),

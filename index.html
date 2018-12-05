@@ -22,6 +22,8 @@
     <script src="/js/main.js"></script>
     <script>
       // Pulled this back into the HTML because it uses the jinja preprocessing, so easiest was to move this back into this file.
+      console.log('Log msg from python: {{ log_msg }}');
+
       function reloadAsTable() {
         window.location = "/?exp_traq_name={{ exp_traq_name }}&showAs=table";
       }
