@@ -14,6 +14,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
   autoescape=True)
 
 DEFAULT_EXP_TRAQ_NAME = 'default'
+DEFAULT_FOR_TOP_N = 10
 
 # We set a parent key on the expense entries to ensure that they are all
 # in the same entity group. Queries across the single entity group
@@ -103,7 +104,7 @@ class MainPage(webapp2.RequestHandler):
   def get(self):
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
-    fetchLimit = 10 # Default value - this makes load time much speedier than loading everything
+    fetchLimit = DEFAULT_FOR_TOP_N # Default value - this makes load time much speedier than loading everything
     showArg = self.request.get('show')
     if showArg:
       if showArg == 'all':
@@ -155,6 +156,7 @@ class MainPage(webapp2.RequestHandler):
       'exp_traq_name': urllib.quote_plus(exp_traq_name),
       'url': url,
       'url_linktext': url_linktext,
+      'defaultForTopN': DEFAULT_FOR_TOP_N,
     }
 
     template = JINJA_ENVIRONMENT.get_template('index.html')

@@ -10,6 +10,74 @@ document.addEventListener("DOMContentLoaded", function(event) {
   selectBox = document.getElementById('select_box');
 });
 
+// Let's play with state management:
+// Now that we have 3 query string params, it's pain in the butt 
+// to manage all the permutations, so will use this global
+// state object as a centralized source of truth.
+
+// NOTE: following VSCode's suggestion to use ES2015 classes 
+// (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
+class State {
+  constructor() {
+    this.traq = null;
+    this.showTopN = true;
+    this.showAsTable = false;
+  }
+  // Exp traq name must be passed in, because it comes from the server via jinja2 
+  // template and main.js doesn't have access to that.
+  // The other parts of the state come from the query string
+  initFromServerAndQueryString(expTraqName) {
+    this.traq = expTraqName;
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('show')) {
+      if (urlParams.get('show') == 'all')
+        this.showTopN = false;
+      else
+        this.showTopN = true;
+    }
+    if (urlParams.has('showAs')) {
+      if (urlParams.get('showAs') == 'table') 
+        this.showAsTable = true;
+      else
+        this.showAsTable = false;
+    }
+  }
+  reloadAsTable() {
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    loc += '&showAs=table';
+    window.location = loc;
+  }
+  reloadAsList() {
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    loc += '&showAs=list';
+    window.location = loc;
+  }
+  reloadShowAll() {
+    let loc = '/?exp_traq_name=' + this.traq;
+    loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    else
+      loc += '&showAs=list';
+    window.location = loc;
+  }
+  reloadShowTopN() {
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    else
+      loc += '&showAs=list';
+    window.location = loc;    
+  }
+}
+
+// Global state
+var state = new State();
+
 function inputChanged(context) {
   var val = context.value.toLowerCase();
   if(val === '') {
@@ -52,7 +120,7 @@ function showChangeTraq() {
   
   var form = document.getElementById('changeTraqForm');
   form.style.display = 'block';
-  form.focus();
+  document.getElementById('changeExpTraqField').focus();
 }
 
 function deleteEntry(item_id) {
