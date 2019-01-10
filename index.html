@@ -73,13 +73,12 @@
           <div class="form-group row dropdown">
             <label class="col-2 col-form-label">Payee</label>
             <div class="col-10">
-              <input class="form-control" id="payeeField_mainForm" name="payee" type="text" required onkeyup="inputChanged(this)">
-              <div id="payeeDropdown_mainForm">
+              <input class="form-control" id="payeeField_mainForm" name="payee" type="text" required onkeyup="inputChanged(this, 'payeeDropdown_mainForm')">
+              <div class="payeeDropdown" id="payeeDropdown_mainForm">
                 {% for uniquePayee in uniquePayees %}
-                  <a href="#" onclick="dropdownItemSelected(this)">{{ uniquePayee }}</a>
+                  <a href="#" onclick="dropdownItemSelected(this, 'payeeField_mainForm', 'payeeDropdown_mainForm')">{{ uniquePayee }}</a>
                 {% endfor %}
               </div>
-
             </div>
           </div>
 
@@ -173,10 +172,10 @@
             <div class="form-group row dropdown">
               <label class="col-2 col-form-label">Payee</label>
               <div class="col-10">
-                <input class="form-control" id="input_field" name="payee" type="text" required onkeyup="inputChanged(this)">
-                <div id="select_box">
+                <input class="form-control" id="payeeField_editForm" name="payee" type="text" required onkeyup="inputChanged(this, 'payeeDropdown_editForm')">
+                <div class="payeeDropdown" id="payeeDropdown_editForm">
                   {% for uniquePayee in uniquePayees %}
-                    <a href="#" onclick="dropdownItemSelected(this)">{{ uniquePayee }}</a>
+                    <a href="#" onclick="dropdownItemSelected(this, 'payeeField_editForm', 'payeeDropdown_editForm')">{{ uniquePayee }}</a>
                   {% endfor %}
                 </div>
               </div>

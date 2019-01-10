@@ -67,11 +67,11 @@ class State {
 var state = new State();
 
 /* 
- * stuff related to the autocomplete dropdown 
+ * Stuff related to the payee autocomplete dropdowns 
  */
-function inputChanged(context) {
+function inputChanged(context, payeeDropdownId) {
   var val = context.value.toLowerCase();
-  var dropdown = document.getElementById('payeeDropdown_mainForm');
+  var dropdown = document.getElementById(payeeDropdownId);
   if(val === '') {
     dropdown.style.display = 'none';
     return;
@@ -87,10 +87,10 @@ function inputChanged(context) {
   }
 }
   
-function dropdownItemSelected(context) {
+function dropdownItemSelected(context, payeeFieldId, payeeDropdownId) {
   var val = context.innerHTML;
-  document.getElementById('payeeField_mainForm').value = val;
-  document.getElementById('payeeDropdown_mainForm').style.display = 'none';
+  document.getElementById(payeeFieldId).value = val;
+  document.getElementById(payeeDropdownId).style.display = 'none';
 }
 /* ------------------------------------------ */
 
