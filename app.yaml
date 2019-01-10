@@ -32,9 +32,13 @@ handlers:
 # [END handlers]
 
 # [START libraries]
+# GAE documentation says that for production got to use actual veraion number instead of "latest"
+# https://cloud.google.com/appengine/docs/standard/python/getting-started/generating-dynamic-content-templates
 libraries:
 - name: webapp2
-  version: latest
+  #version: latest
+  version: 2.5.2
 - name: jinja2
-  version: latest
+  #version: latest
+  version: 2.6
 # [END libraries]

@@ -36,9 +36,9 @@ def runPayeeContentMigration():
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","BLAH PAYEE 2"],        
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDArwoM","BLAH PAYEE 3"],
     ]
-    print "Running migration (" + str(len(changes)) + " items):"
+    print('Running migration (' + str(len(changes)) + ' items):')
     for change in changes:
-        print change
+        print(change)
         key = ndb.Key(urlsafe = change[0])
         entry = key.get()
         entry.payee = change[1]
@@ -70,7 +70,8 @@ class Entry(ndb.Model):
   payee = ndb.StringProperty(indexed=True, required=True)
   comment = ndb.StringProperty(indexed=False)
 
-  # Stuff to be populated automatically
+  # Fields above will come from the form values submitted by user.
+  # Fields below will be populated by our code.
   author = ndb.StructuredProperty(Author)
   timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -94,12 +95,14 @@ class EasternTZInfo(datetime.tzinfo):
       return datetime.timedelta(hours=1)
     else:
       return datetime.timedelta(hours=0)
+  
   def tzname(self, dt):
     if self.dst(dt) == datetime.timedelta(hours=0):
       return "EST"
     else:
       return "EDT"
 
+# Handler class for managing the main page
 class MainPage(webapp2.RequestHandler):
   def get(self):
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
@@ -145,7 +148,8 @@ class MainPage(webapp2.RequestHandler):
     for entry in entries:
       # Today's date --> convert from UTC to Eastern -- WTF is this so HARD?!
       entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
-      entry.dateOnly = datetime.datetime.strftime(entry.datetime, '%a %Y-%m-%d')
+      entry.dateYMD = datetime.datetime.strftime(entry.datetime, '%Y-%m-%d')
+      entry.dateWeekday = datetime.datetime.strftime(entry.datetime, '%a')
 
     template_values = {
       'show_as_table': show_as_table,
@@ -162,13 +166,17 @@ class MainPage(webapp2.RequestHandler):
     template = JINJA_ENVIRONMENT.get_template('index.html')
     self.response.write(template.render(template_values))
 
-class SubmitEntry(webapp2.RequestHandler):
+# Handler class for managing CRUD operations on individual entries
+# We don't have get (it's handled by MainPage), but we have post, put, and delete
+class EntryHandler(webapp2.RequestHandler):
   def post(self):
-    # We set the same parent key on the 'Entry' to ensure each
+    print(str(self.request))
+
+    # From GAE docs: "We set the same parent key on the 'Entry' to ensure each
     # Entry is in the same entity group. Queries across the
     # single entity group will be consistent. However, the write
     # rate to a single entity group should be limited to
-    # ~1/second.
+    # ~1/second.""
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
     entry = Entry(parent=exp_traq_key(exp_traq_name))
 
@@ -193,15 +201,44 @@ class SubmitEntry(webapp2.RequestHandler):
     query_params = {'exp_traq_name': exp_traq_name}
     self.redirect('/?' + urllib.urlencode(query_params))
 
-class DeleteEntry(webapp2.RequestHandler):
-  """ Datastore reference https://cloud.google.com/appengine/docs/python/ndb/creating-entities """
-  def delete(self, param1):
-    # param1 contains id of entry to delete
-    entry_key = ndb.Key(urlsafe=param1)
+  def put(self, key): # key is the urlsafe ndb key of the entry being updated
+    print(str(self.request))
+
+    date = self.request.get('date') 
+    amount = self.request.get('amount')
+    payee = self.request.get('payee')
+    comment = self.request.get('comment')
+
+    # Get entry from db
+    entry_key = ndb.Key(urlsafe = key)
+    entry = entry_key.get()
+
+    # Update entry with info from the client
+    if date:
+      naive = datetime.datetime.strptime(date, '%Y-%m-%d')
+      naiveAdjusted = naive - EasternTZInfo().utcoffset(naive)
+      entry.datetime = naiveAdjusted
+    
+    if amount:
+      entry.amount = int(amount)
+  
+    if payee:
+      entry.payee = payee
+    
+    if comment:
+      entry.comment = comment
+    
+    # Write updated entry to db
+    entry.put()
+
+    # We're reloading page in JS. Nothing to do here; we're done
+
+  def delete(self, key): # key is the urlsafe ndb key of the entry being deleted
+    entry_key = ndb.Key(urlsafe = key)
     entry_key.delete()
 
 app = webapp2.WSGIApplication([
   ('/', MainPage),
-  ('/submit', SubmitEntry),
-  ('/entry/(.+)', DeleteEntry),
+  ('/submit', EntryHandler),
+  ('/entry/(.+)', EntryHandler),
 ], debug=True)

@@ -41,3 +41,8 @@
   margin-bottom: 25px;
   margin-top: 10px;
 }
+#editForm {
+  /* border not working for some reason */
+  border: 1px dotten green; 
+  display: none;
+}
