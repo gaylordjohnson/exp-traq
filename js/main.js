@@ -140,6 +140,12 @@ function editEntry(id) {
   entryBeingEdited.parentNode.insertBefore(form, entryBeingEdited);
   entryBeingEdited.style.display = 'none';
   form.style.display = 'block';
+
+  //xx DOESN'T WORK :-(
+  // I debugged it and what happens is it gets scrolled into view but then
+  // something causes the page to instantly scroll to the top again.
+  // Can't figure out what it is...
+  form.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
 }
 
 // Once page loads, add 'submit' event listener to the editForm.
@@ -193,6 +199,7 @@ function closeEditForm() {
   form = document.getElementById('editForm');
   form.style.display = 'none';
   entryBeingEdited.style.display = 'block';
+  entryBeingEdited.scrollIntoView(); //xx DOESN'T WORK
 }
 
 function deleteEntry(id) {
