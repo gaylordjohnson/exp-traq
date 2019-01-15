@@ -163,7 +163,7 @@
             $<span class='amount'>{{ entry.amount }}</span> <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
             <span class='comment'>{{ entry.comment }}</span>
-            <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit asdf</a> |
+            <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit</a> |
             <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a> 
           </div>
           {% endfor %}
