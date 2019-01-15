@@ -156,57 +156,15 @@
           </table>        
         {% else %}
           <!-- NOTE: icons below are from https://design.google.com/icons/ -->
-          <a href="#" id="showAsTable" onclick="state.reloadAsTable()">Show as a table</a>
-
-          <!-- NOTE: form has no action or method attributes because I need to do a PUT, yet html forms 
-          only support GET and POST. Instead I attach a 'submit' event listener in main.js
-          which intercepts form submission and does a PUT via AJAX instead. -->
-          <form id="editForm" autocomplete="off">
-            <div class="form-group row">
-              <label class="col-2 col-form-label">Amount</label>
-              <div class="col-10">
-                <input class="form-control" name="amount" type="number" step="1" required autofocus>
-              </div>
-            </div>
-  
-            <div class="form-group row dropdown">
-              <label class="col-2 col-form-label">Payee</label>
-              <div class="col-10">
-                <input class="form-control" id="payeeField_editForm" name="payee" type="text" required onkeyup="inputChanged(this, 'payeeDropdown_editForm')">
-                <div class="payeeDropdown" id="payeeDropdown_editForm">
-                  {% for uniquePayee in uniquePayees %}
-                    <a href="#" onclick="dropdownItemSelected(this, 'payeeField_editForm', 'payeeDropdown_editForm')">{{ uniquePayee }}</a>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-  
-            <div class="form-group row" id="editDateField"> 
-              <label class="col-2 col-form-label">Date</label>
-              <div class="col-10">
-                <input class="form-control" name="date" type="date">
-              </div>
-            </div>
-  
-            <div class="form-group row" id="editCommentField"> 
-              <label class="col-2 col-form-label">Com'nt</label>
-              <div class="col-10">
-                <textarea class="form-control" name="comment" rows="1"></textarea>
-              </div>
-            </div>
-  
-            <a href="#" onclick="closeEditForm()">Cancel</a>
-            <button type="submit" class="btn btn-primary float-right">Save changes</button>
-          </form>          
-      
+          <a href="#" id="showAsTable" onclick="state.reloadAsTable()">Show as a table</a>      
           {% for entry in entries %}
           <div id="{{ entry.key.urlsafe() }}" class="entry">
             {{ entry.dateWeekday }} <span class='dateYMD'>{{ entry.dateYMD }}</span> <i class="material-icons md-16">lens</i> 
             $<span class='amount'>{{ entry.amount }}</span> <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
             <span class='comment'>{{ entry.comment }}</span>
-            <a href="#" onclick="editEntry('{{ entry.key.urlsafe() }}')">Edit</a> |
-            <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a>
+            <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit asdf</a> |
+            <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a> 
           </div>
           {% endfor %}
         {% endif %}
@@ -214,6 +172,69 @@
       <!-- END DATA DISPLAY -->
 
     </div> <!-- END container -->
+
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <!-- Removing header since I simply don't need it and it takes up space -->
+          <!-- <div class="modal-header">
+            <h5 class="modal-title" id="editModalLongTitle">Edit entry</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div> -->
+          <div class="modal-body">
+            <!-- NOTE: form has no action or method attributes because I need to do a PUT, yet html forms 
+            only support GET and POST. Instead I attach a 'submit' event listener in main.js
+            which intercepts form submission and does a PUT via AJAX instead. -->
+            <form id="editForm" autocomplete="off">
+                <div class="form-group row">
+                  <label class="col-2 col-form-label">Amount</label>
+                  <div class="col-10">
+                    <input class="form-control" name="amount" type="number" step="1" required autofocus>
+                  </div>
+                </div>
+      
+                <div class="form-group row dropdown">
+                  <label class="col-2 col-form-label">Payee</label>
+                  <div class="col-10">
+                    <input class="form-control" id="payeeField_editForm" name="payee" type="text" required onkeyup="inputChanged(this, 'payeeDropdown_editForm')">
+                    <div class="payeeDropdown" id="payeeDropdown_editForm">
+                      {% for uniquePayee in uniquePayees %}
+                        <a href="#" onclick="dropdownItemSelected(this, 'payeeField_editForm', 'payeeDropdown_editForm')">{{ uniquePayee }}</a>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+      
+                <div class="form-group row" id="editDateField"> 
+                  <label class="col-2 col-form-label">Date</label>
+                  <div class="col-10">
+                    <input class="form-control" name="date" type="date">
+                  </div>
+                </div>
+      
+                <div class="form-group row" id="editCommentField"> 
+                  <label class="col-2 col-form-label">Com'nt</label>
+                  <div class="col-10">
+                    <textarea class="form-control" name="comment" rows="2"></textarea>
+                  </div>
+                </div>
+      
+                <button type="button" class="btn btn-tertiary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary float-right">Save changes</button>
+              </form>          
+            </div>
+            <!-- Removing modal footer, since it would put the action buttons outside the form, which I don't
+            know how to handle so that the action would initiate form submission (which we intercept in main.js).
+            Plus don't really need the footer; form is more compact this way. -->
+            <!-- <div class="modal-footer">
+                <button type="button" class="btn btn-tertiary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div> -->
+        </div>
+      </div>
+    </div>    
     
     <!-- Bootstrap's JS. Should be at end of body -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
