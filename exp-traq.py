@@ -217,6 +217,16 @@ class EntryHandler(webapp2.RequestHandler):
     entry.comment = self.request.get('comment')
     entry.put()
 
+    # If a cross-post was requested, create a copy of entry and post it into the other tracker
+    if self.request.get('xpost'):
+      entry2 = Entry(parent=exp_traq_key(self.request.get('xpost')))
+      entry2.author = entry.author
+      entry2.datetime = entry.datetime
+      entry2.amount = entry.amount
+      entry2.payee = entry.payee
+      entry2.comment = entry.comment
+      entry2.put()
+
     query_params = {'exp_traq_name': exp_traq_name}
     self.redirect('/?' + urllib.urlencode(query_params))
 

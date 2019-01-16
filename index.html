@@ -96,11 +96,19 @@
             </div>
           </div>
 
+          <div class="form-group row" id="xpostField"> <!-- initially hidden; see CSS -->
+            <label class="col-2 col-form-label">X-post</label>
+            <div class="col-10">
+              <input class="form-control" name="xpost" type="text" id="xpostInput">
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-2"></div>
             <div class="col-10">
               <a href="#" id="dateDefault" onclick="showDateField()">Add date</a>&nbsp;&nbsp;
-              <a href="#" id="commentDefault" onclick="showCommentField()">Add comment</a>
+              <a href="#" id="commentDefault" onclick="showCommentField()">Add comment</a>&nbsp;&nbsp;
+              <a href="#" id="xpostDefault" onclick="showXpostField()">Add x-post</a>
             </div>
           </div>
 

@@ -18,12 +18,13 @@
 }
 /*------------------*/
 
-#dateField, #commentField {
+#dateField, #commentField, #xpostField {
   display: none; /* initially hidden */
 }
 #changeTraqForm {
   display: none; /* initially hidden */
 }
+
 .material-icons.md-16 { 
   font-size: 12px; 
   color: #ffaf1a; 

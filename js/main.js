@@ -106,6 +106,12 @@ function showCommentField() {
   document.getElementById('commentInput').focus();
 }
 
+function showXpostField() {
+  document.getElementById('xpostDefault').style.display = 'none';
+  document.getElementById('xpostField').style.display = 'flex';
+  document.getElementById('xpostInput').focus();
+}
+
 function showChangeTraq() {
   document.getElementById('expTraqDefaultView').style.display = 'none';
   document.getElementById('expTraqChangeBtn').style.display = 'none';
