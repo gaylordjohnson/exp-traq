@@ -54,6 +54,16 @@ def runPayeeTypeMigration(exp_traq_name):
   for entry in entries:
     entry.put()
 
+# Returns a list of unique trackers and total number of entries across all trackers
+def getInfoAboutAllTrackers():
+  entries = Entry.query().fetch() # Expensive operation, returns ALL entries, across ALL trackers
+  count = len(entries)
+  uniqueTrackers = set([])
+  for entry in entries:
+    uniqueTrackers.add(entry.key.parent().id())
+  return list(uniqueTrackers), count
+
+
 class Author(ndb.Model):
   """Sub model for representing an author."""
   identity = ndb.StringProperty(indexed=False)
@@ -125,6 +135,13 @@ class MainPage(webapp2.RequestHandler):
     elif self.request.get('runMigration') == 'PayeeType':
       runPayeeTypeMigration(exp_traq_name)
 
+    # Optional tool for checking on all trackers.
+    # Invoke by including the 'listTrackers' query-string parameter (doesn't need to have a value)
+    uniqueTrackers = []
+    entryCountAcrossAllTrackers = -1
+    if 'listTrackers' in self.request.arguments(): # Checks for presence of 'listTrackers' param
+      uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()
+
     entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
     totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
 
@@ -161,6 +178,8 @@ class MainPage(webapp2.RequestHandler):
       'url': url,
       'url_linktext': url_linktext,
       'defaultForTopN': DEFAULT_FOR_TOP_N,
+      'uniqueTrackers': uniqueTrackers,
+      'entryCountAcrossAllTrackers': entryCountAcrossAllTrackers,
     }
 
     template = JINJA_ENVIRONMENT.get_template('index.html')

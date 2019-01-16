@@ -41,18 +41,18 @@
           <a href="{{ url|safe }}">{{ url_linktext }}</a>
         </div>
         <div>
-          <p class="text-right" id="expTraqDefaultView">Exp traq: {{exp_traq_name}} <a href="#" id="expTraqChangeBtn" onclick="showChangeTraq()">Change</a></p>
+          <p class="text-right" id="expTraqDefaultView">Tracker: {{exp_traq_name}} <a href="#" id="expTraqChangeBtn" onclick="showChangeTraq()">Change</a></p>
           <!-- Form initially hidden; see CSS -->
           <form id="changeTraqForm" class="tracker">
             <div class="form-row d-flex justify-content-end">
               <div>
-                <label class="col-form-label">Change exp traq to</label>
+                <label class="col-form-label">Go to tracker</label>
               </div>
               <div class="col-4">
                 <input class="form-control" name="exp_traq_name" id="changeExpTraqField">
               </div>
               <div>
-                <button type="submit" class="btn btn-primary float-right" id="changeExpTraqBtn">Change</button>
+                <button type="submit" class="btn btn-primary float-right" id="changeExpTraqBtn">Go</button>
               </div>
             </div>
           </form>
@@ -157,8 +157,11 @@
         {% else %}
           <!-- NOTE: icons below are from https://design.google.com/icons/ -->
           <a href="#" id="showAsTable" onclick="state.reloadAsTable()">Show as a table</a>      
+          <!-- NOTE/REMINDER: in Bootstrap you use special classes to control appearance,
+          so below 'entry' is my own class, but 'alert alert-secondary mb-1' are Boostrap's classes
+          (see https://getbootstrap.com/docs/4.0/components/alerts/ and https://getbootstrap.com/docs/4.0/utilities/spacing/) -->
           {% for entry in entries %}
-          <div id="{{ entry.key.urlsafe() }}" class="entry">
+          <div id="{{ entry.key.urlsafe() }}" class="entry alert alert-secondary mb-0" >
             {{ entry.dateWeekday }} <span class='dateYMD'>{{ entry.dateYMD }}</span> <i class="material-icons md-16">lens</i> 
             $<span class='amount'>{{ entry.amount }}</span> <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
@@ -170,6 +173,26 @@
         {% endif %}
       </div>
       <!-- END DATA DISPLAY -->
+
+      <!-- TOOLS SECTION -->
+      <div class="alert alert-info" role="alert">
+        Tools:
+        <ul>
+          <li>List all trackers: <a href='/?listTrackers'>'/?listTrackers'</a></li>
+            {% if uniqueTrackers|length > 0 %}
+              <ul>
+                <li>Unique trackers:</li>
+                <ul>
+                  {% for tracker in uniqueTrackers %}
+                    <li><a href='/?exp_traq_name={{ tracker }}'>{{ tracker }}</a></li>
+                  {% endfor %}
+                </ul>
+                <li>Entries across all trackers: {{ entryCountAcrossAllTrackers }}</li>
+              </ul>
+            {% endif %}
+        </ul>
+      </div>
+      <!-- END TOOLS SECTION -->
 
     </div> <!-- END container -->
 
