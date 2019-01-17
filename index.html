@@ -40,6 +40,9 @@
           {% endif %}
           <a href="{{ url|safe }}">{{ url_linktext }}</a>
         </div>
+        {% if lastXpost is defined %}
+        <div class='text-right'>Just xposted to <a href='/?exp_traq_name={{ lastXpost }}'>{{ lastXpost }}</a></div>
+        {% endif %}  
         <div>
           <p class="text-right" id="expTraqDefaultView">Tracker: {{exp_traq_name}} <a href="#" id="expTraqChangeBtn" onclick="showChangeTraq()">Change</a></p>
           <!-- Form initially hidden; see CSS -->
@@ -106,9 +109,9 @@
           <div class="row">
             <div class="col-2"></div>
             <div class="col-10">
-              <a href="#" id="dateDefault" onclick="showDateField()">Add date</a>&nbsp;&nbsp;
-              <a href="#" id="commentDefault" onclick="showCommentField()">Add comment</a>&nbsp;&nbsp;
-              <a href="#" id="xpostDefault" onclick="showXpostField()">Add x-post</a>
+              <a href="#" id="dateDefault" onclick="showDateField()">Date</a>&nbsp;&nbsp;
+              <a href="#" id="commentDefault" onclick="showCommentField()">Comment</a>&nbsp;&nbsp;
+              <a href="#" id="xpostDefault" onclick="showXpostField()">X-post</a>
             </div>
           </div>
 
@@ -195,7 +198,7 @@
                     <li><a href='/?exp_traq_name={{ tracker }}'>{{ tracker }}</a></li>
                   {% endfor %}
                 </ul>
-                <li>Entries across all trackers: {{ entryCountAcrossAllTrackers }}</li>
+                <li>{{ entryCountAcrossAllTrackers }} entries across all trackers</li>
               </ul>
             {% endif %}
         </ul>

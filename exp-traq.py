@@ -182,6 +182,11 @@ class MainPage(webapp2.RequestHandler):
       'entryCountAcrossAllTrackers': entryCountAcrossAllTrackers,
     }
 
+    # If we just added an entry and xposted it to another tracker, add the target tracker
+    # name to template values so we can give user a handy link to that tracker to check things
+    if 'lastXpost' in self.request.arguments(): # Was 'lastXpost' query string parameter defined?
+      template_values['lastXpost'] = self.request.get('lastXpost')
+
     template = JINJA_ENVIRONMENT.get_template('index.html')
     self.response.write(template.render(template_values))
 
@@ -218,8 +223,9 @@ class EntryHandler(webapp2.RequestHandler):
     entry.put()
 
     # If a cross-post was requested, create a copy of entry and post it into the other tracker
-    if self.request.get('xpost'):
-      entry2 = Entry(parent=exp_traq_key(self.request.get('xpost')))
+    xpostTo = self.request.get('xpost')
+    if xpostTo:
+      entry2 = Entry(parent=exp_traq_key(xpostTo))
       entry2.author = entry.author
       entry2.datetime = entry.datetime
       entry2.amount = entry.amount
@@ -228,6 +234,8 @@ class EntryHandler(webapp2.RequestHandler):
       entry2.put()
 
     query_params = {'exp_traq_name': exp_traq_name}
+    if xpostTo:
+      query_params['lastXpost'] = xpostTo
     self.redirect('/?' + urllib.urlencode(query_params))
 
   def put(self, key): # key is the urlsafe ndb key of the entry being updated
