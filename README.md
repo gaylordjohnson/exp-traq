@@ -37,7 +37,7 @@ git clone https://github.com/gaylordjohnson/exp-traq.git
 
 // The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
 git config --global user.name "Gaylord Johnson" 
-git config --global user.email "MY_NAME@example.com"
+git config --global user.email gaylordjohnson@users.noreply.github.com
 
 // Also try:
 git config --list
