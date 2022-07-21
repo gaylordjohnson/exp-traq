@@ -2,7 +2,56 @@
 
 ## Cheat sheet for me:
 
-### Using Google Cloud CLI
+### 1. Reminder on how to use git with github
+
+To download project from GitHub to local computer to make your changes to the project:
+```
+Go to public repository on GitHub, click Code on top-right, select HTTPS, copy the url
+cd Documents/code
+git clone https://github.com/gaylordjohnson/exp-traq.git // the URL you got above
+```
+
+The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+Note: The email below is how Github associates the commits to my account in a way that does not expose my actual email address
+```
+git config --global user.name "Gaylord Johnson" 
+git config --global user.email gaylordjohnson@users.noreply.github.com
+```
+
+Also try:
+```
+git config --list
+git config --global --list
+```
+
+Also:
+```
+git log // To see information about the commits, including the authors etc.
+git diff // to see diff between latest code (unstaged) and staged code
+git diff origin master // if I understand correctly, diffs between local staging and what's on GitHub
+```
+
+Making and committing code changes
+```
+<make some changes in the code>
+git status
+git add * // Adds changes you made to the "staging" thing
+git commit -m "this is a commit message explaining what's in this commit"
+// Alternatively use the following shortcut for git add and git commit:
+git acm "this is a commit message blah blah"
+```
+
+Command below will make it so that git push (see next) will only ask your GitHub credentials once
+```
+git config --global credential.helper store
+```
+
+Push changes back to the repository on GitHub:
+```
+git push // Will ask for GitHub credentials 
+```
+
+### 2. Using Google Cloud CLI
 
 View info about current project:
 ```
@@ -44,55 +93,6 @@ To get rid of unused indexes, run
 $ gcloud datastore indexes cleanup index.yaml
 ```
 
-### Reminder on how to use git with github
-
-To download project from GitHub to local computer to make your changes to the project:
-```
-Go to public repository on GitHub, click Code on top-right, select HTTPS, copy the url
-cd /Documents/code
-git clone https://github.com/gaylordjohnson/exp-traq.git // the URL you got above
-```
-
-The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
-Note: The email below is how Github associates the commits to my account in a way that does not expose my 
-```
-actual email address
-git config --global user.name "Gaylord Johnson" 
-git config --global user.email gaylordjohnson@users.noreply.github.com
-```
-
-Also try:
-```
-git config --list
-git config --global --list
-```
-
-Also:
-```
-git log // To see information about the commits, including the authors etc.
-git diff // to see diff between latest code (unstaged) and staged code
-git diff origin master // if I understand correctly, diffs between local staging and what's on GitHub
-```
-
-Making and committing code changes
-```
-<make some changes in the code>
-git status
-git add * // Adds changes you made to the "staging" thing
-git commit -m "this is a commit message explaining what's in this commit"
-// Alternatively use the following shortcut for git add and git commit:
-git acm "this is a commit message blah blah"
-```
-
-Command below will make it so that git push (see next) will only ask your GitHub credentials once
-```
-git config --global credential.helper store
-```
-
-Push changes back to the repository on GitHub:
-```
-git push // Will ask for GitHub credentials 
-```
 
 ## Products
 - [App Engine][1]
