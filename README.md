@@ -82,7 +82,11 @@ $ gcloud info
 
 Run project locally:
 ```
-$ dev_appserver.py ./
+cd <my project folder>
+// On my new Mac couldn't be bothered to figure out how to add the above to PATH, so will run using full path instead:
+// $ dev_appserver.py ./
+$ /Users/gaylord/google-cloud-sdk/bin/dev_appserver.py ./
+// NOTE: dev_appserver.py needs whatever version of python your project will be in as 'python', but it also needs python 2.7.12+ to be present on the machine as 'python2'. So I had to simlink one of my python 3 installations as 'python' and had to download and install python 2.7.12, which came out of the box as 'python2'. Then dev server finally worked.
 ```
 Note: dev_appserver.py has a bunch of useful options, e.g. can browse datastore in browser - google it
 
@@ -91,6 +95,14 @@ Deploy project to Google Cloud:
 $ gcloud app deploy // NOTE: this command creates a rolling list of versions, then eventually you hit a limit of 15 and need to delete some older versions. To overwrite a version insteadd, do
 $ gcloud app deploy -v v1 //which will update the exsisting v1 version (which is the one serving)
 ```
+On first deploy attempt on my 2021 mac, got error:
+```
+File upload done.
+Updating service [default]...failed.                                                                                                                         
+ERROR: (gcloud.app.deploy) Error Response: [9] Cloud build b947a5c4-7f41-4620-8e67-18af250d4be4 status: FAILURE
+Build error details: Access to bucket staging.exp-traq.appspot.com denied. You must grant Storage Object Viewer permission to 122113351471@cloudbuild.gserviceaccount.com.
+```
+Granded the "Storage Object Viewer" role (not permission) to the email above, in IAM, and it was able to deploy.
 
 Add'l helpful commands:
 ```
