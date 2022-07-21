@@ -58,7 +58,9 @@ git acm "this is a commit message blah blah"
 git config --global credential.helper store
 
 // Push changes back to the repository on GitHub:
-git push // Will ask for GitHub credentials
+git push // Will ask for GitHub credentials 
+
+blah blah remove later
 
 ## Products
 - [App Engine][1]
