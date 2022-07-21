@@ -2,6 +2,8 @@
 
 ## Cheat sheet for me:
 
+### Using Google Cloud CLI
+
 View info about current project:
 $ gcloud info
 
@@ -26,6 +28,16 @@ To check status of index creation, see https://console.cloud.google.com/datastor
 
 To get rid of unused indexes, run
 $ gcloud datastore indexes cleanup index.yaml
+
+### Reminder on how to use git with github
+
+Go to public repository on GitHub, click Code on top-right, select HTTPS, copy the url
+cd /Documents/code
+git clone https://github.com/gaylordjohnson/exp-traq.git
+git status
+git add *
+git commit
+git push
 
 ## Products
 - [App Engine][1]
