@@ -31,10 +31,12 @@ $ gcloud datastore indexes cleanup index.yaml
 
 ### Reminder on how to use git with github
 
-// To download project from GitHub to local computer to make your changes to the project:
+To download project from GitHub to local computer to make your changes to the project:
+```
 Go to public repository on GitHub, click Code on top-right, select HTTPS, copy the url
 cd /Documents/code
 git clone https://github.com/gaylordjohnson/exp-traq.git // the URL you got above
+```
 
 // The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
 // The email below is how Github associates the commits to my account in a way that does not expose my actual email address
