@@ -218,7 +218,7 @@ class EntryHandler(webapp2.RequestHandler):
       entry.datetime = datetime.datetime.utcnow()
 
     entry.amount = int(self.request.get('amount'))
-    entry.payee = self.request.get('payee')
+    entry.payee = self.request.get('payee').strip()
     entry.comment = self.request.get('comment')
     entry.put()
 
@@ -243,7 +243,7 @@ class EntryHandler(webapp2.RequestHandler):
 
     date = self.request.get('date') 
     amount = self.request.get('amount')
-    payee = self.request.get('payee')
+    payee = self.request.get('payee').strip()
     comment = self.request.get('comment')
 
     # Get entry from db
