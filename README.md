@@ -35,7 +35,7 @@ Go to public repository on GitHub, click Code on top-right, select HTTPS, copy t
 cd /Documents/code
 git clone https://github.com/gaylordjohnson/exp-traq.git
 
-// I do not know why I need to do the next two commands, and what happens if I don't set them... Probably nothing
+// The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
 git config --global user.name "Gaylord Johnson" 
 git config --global user.email "MY_NAME@example.com"
 
