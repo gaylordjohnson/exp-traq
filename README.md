@@ -64,13 +64,18 @@ Then close terminal window and open a new one for the above changes to take effe
 gcloud // lists all gcloud commands
 ```
 
-Configure default project:
+Authenticate into Google Cloud and configure default project:
 ```
 $ gcloud init 
 ```
-...and follow prompts (e.g. which login you want to use, which project to apply commands to, etc.). Super easy!
+...follow prompts (e.g. which login you want to use, which project to apply commands to, etc.). Super easy!
 
-View info about current project:
+Cheat sheet of all gcloud commands:
+```
+$ gcloud cheat-sheet
+```
+
+View current environment details:
 ```
 $ gcloud info
 ```
