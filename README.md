@@ -41,7 +41,7 @@ git commit -m "this is a commit message explaining what's in this commit"
 git acm "this is a commit message blah blah"
 ```
 
-Command below will make it so that git push (see next) will only ask your GitHub credentials once
+The command below will make it so that git push (see next) will only ask your GitHub credentials once
 ```
 git config --global credential.helper store
 ```
