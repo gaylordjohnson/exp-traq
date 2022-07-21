@@ -100,7 +100,7 @@ On first deploy attempt on my 2021 mac, got error:
 File upload done.
 Updating service [default]...failed.                                                                                                                         
 ERROR: (gcloud.app.deploy) Error Response: [9] Cloud build b947a5c4-7f41-4620-8e67-18af250d4be4 status: FAILURE
-Build error details: Access to bucket staging.exp-traq.appspot.com denied. You must grant Storage Object Viewer permission to 122113351471@cloudbuild.gserviceaccount.com.
+Build error details: Access to bucket staging.exp-traq.appspot.com denied. You must grant Storage Object Viewer permission to <gaylord redacted>@cloudbuild.gserviceaccount.com.
 ```
 Granded the "Storage Object Viewer" role (not permission) to the email above, in IAM, and it was able to deploy.
 
