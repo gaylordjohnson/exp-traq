@@ -36,17 +36,29 @@ cd /Documents/code
 git clone https://github.com/gaylordjohnson/exp-traq.git
 
 // The following is explained here: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+// The email below is how Github associates the commits to my account in a way that does not 
+// expose my actual email address
 git config --global user.name "Gaylord Johnson" 
-git config --global user.email "gaylordjohnson@users.noreply.github.com"
+git config --global user.email gaylordjohnson@users.noreply.github.com
 
 // Also try:
 git config --list
 git config --global --list
 
+git log // To see information about the commits, including the author etc.
+
 git status
+<make some changes in the code>
 git add *
-git commit
-git push
+git commit -m "this is a commit message explaining what's in this commit"
+// Alternatively use the following shortcut for git add followed by git commit:
+git acm "this is a commit message blah blah"
+
+// Command below will make it so that git push (see next) will only ask your GitHub credentials once
+git config --global credential.helper store
+
+// Push changes back to the repository on GitHub:
+git push // Will ask for GitHub credentials
 
 ## Products
 - [App Engine][1]
