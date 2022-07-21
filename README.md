@@ -53,9 +53,15 @@ git push // Will ask for GitHub credentials
 
 ### 2. Using Google Cloud CLI
 
-View info about current project:
+Install Google Cloud CLI on Mac
 ```
-$ gcloud info
+download tar.gz for 64-bit M1 processor from https://cloud.google.com/sdk/docs/install-sdk#mac
+doubleclick it in Finder to extract it
+move the resulting google-cloud-sdk folder to home folder /users/<MyUsername>
+in terminal, cd into google-cloud-sdk
+./install.sh // will add CLI to PATH etc. Follow prompts - super easy.
+Then close terminal window and open a new one for the above changes to take effect. 
+gcloud // lists all gcloud commands
 ```
 
 Configure default project:
@@ -63,6 +69,11 @@ Configure default project:
 $ gcloud init 
 ```
 ...and follow prompts (e.g. which login you want to use, which project to apply commands to, etc.). Super easy!
+
+View info about current project:
+```
+$ gcloud info
+```
 
 Run project locally:
 ```
