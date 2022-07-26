@@ -74,7 +74,7 @@ class Entry(ndb.Model):
   datetime = ndb.DateTimeProperty(indexed=True, required=True)
   amount = ndb.IntegerProperty(indexed=False, required=True)
   #payee = ndb.StringProperty(indexed=False, required=True)
-  # Changed to indexed, which is required to do a projection (see below)
+  # Changed to indexed, which is required to do a projection (see below and https://cloud.google.com/appengine/docs/legacy/standard/python/datastore/projectionqueries)
   # DAMN this was hard: see my Stackoverflow question, which I eventually figured out and answered myself:
   # https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
   payee = ndb.StringProperty(indexed=True, required=True)
