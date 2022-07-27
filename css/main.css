@@ -27,7 +27,8 @@
 
 .material-icons.md-16 { 
   font-size: 12px; 
-  color: mediumslateblue; 
+  /* color: mediumslateblue;  */
+  color: deeppink;
 }
 #data {
   margin: 40px 0px 30px 0px;
