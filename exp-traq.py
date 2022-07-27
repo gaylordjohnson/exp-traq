@@ -115,20 +115,20 @@ class EasternTZInfo(datetime.tzinfo):
 # Handler class for managing the main page
 class MainPage(webapp2.RequestHandler):
   def get(self):
+    # print(str(self.request))
+
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
+    # XX ideally this logic should be fixed to avoid the following bug:
+    # User modifies query string param to a non-number, then int() 
+    # throws exception.
     fetchLimit = DEFAULT_FOR_TOP_N # Default value - this makes load time much speedier than loading everything
-    showArg = self.request.get('show')
-    if showArg:
-      if showArg == 'all':
+    show = self.request.get('show')
+    if show:
+      if show == 'all':
         fetchLimit = None
       else:
-        fetchLimit = int(showArg)
-    
-    if self.request.get('showAs') == 'table':
-      show_as_table = True
-    else:
-      show_as_table = False
+        fetchLimit = int(show)
     
     if self.request.get('runMigration') == 'PayeeContent':
       runPayeeContentMigration()
@@ -169,7 +169,8 @@ class MainPage(webapp2.RequestHandler):
       entry.dateWeekday = datetime.datetime.strftime(entry.datetime, '%a')
 
     template_values = {
-      'show_as_table': show_as_table,
+      'showAs': self.request.get('showAs'),
+      'show': show,
       'user': user,
       'entries': entries,
       'totalEntries': totalEntries,
@@ -194,7 +195,7 @@ class MainPage(webapp2.RequestHandler):
 # We don't have get (it's handled by MainPage), but we have post, put, and delete
 class EntryHandler(webapp2.RequestHandler):
   def post(self):
-    print(str(self.request))
+    #print(str(self.request))
 
     # From GAE docs: "We set the same parent key on the 'Entry' to ensure each
     # Entry is in the same entity group. Queries across the
@@ -233,13 +234,17 @@ class EntryHandler(webapp2.RequestHandler):
       entry2.comment = entry.comment
       entry2.put()
 
-    query_params = {'exp_traq_name': exp_traq_name}
+    query_params = {
+      'exp_traq_name': exp_traq_name, 
+      'show': self.request.get('show'),
+      'showAs': self.request.get('showAs')
+    }
     if xpostTo:
       query_params['lastXpost'] = xpostTo
     self.redirect('/?' + urllib.urlencode(query_params))
 
   def put(self, key): # key is the urlsafe ndb key of the entry being updated
-    print(str(self.request))
+    # print(str(self.request))
 
     date = self.request.get('date') 
     amount = self.request.get('amount')
@@ -271,6 +276,8 @@ class EntryHandler(webapp2.RequestHandler):
     # We're reloading page in JS. Nothing to do here; we're done
 
   def delete(self, key): # key is the urlsafe ndb key of the entry being deleted
+    # print(str(self.request))
+
     entry_key = ndb.Key(urlsafe = key)
     entry_key.delete()
 

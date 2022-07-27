@@ -65,7 +65,7 @@
 
       <!-- MAIN FORM -->    
       <div id="mainForm">
-        <form action="/submit?exp_traq_name={{ exp_traq_name }}" method="post" autocomplete="off">
+        <form action="/submit?exp_traq_name={{ exp_traq_name }}&show={{ show }}&showAs={{ showAs }}" method="post" autocomplete="off">
           <div class="form-group row">
             <label class="col-2 col-form-label">Amount</label>
             <div class="col-10">
@@ -135,7 +135,7 @@
           {% endif %}
         {% endif %}
 
-        {% if show_as_table %}
+        {% if showAs == 'table' %}
           <a href="#" id="showAsList" onclick="state.reloadAsList()">Show as a list</a>
           <table class="table table-sm table-bordered" id="dataTable">
             <thead>
