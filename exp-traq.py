@@ -7,6 +7,7 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 import jinja2
 import webapp2
+import timeit
 
 JINJA_ENVIRONMENT = jinja2.Environment(
   loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -63,6 +64,15 @@ def getInfoAboutAllTrackers():
     uniqueTrackers.add(entry.key.parent().id())
   return list(uniqueTrackers), count
 
+# Get list of unique payees
+# Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
+# Therefore using obj.payee to access payee name    
+def getAllUniquePayees(exp_traq_name):
+  payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
+  payees = []
+  for obj in payeeObjects:
+    payees.append(obj.payee)
+  return payees
 
 class Author(ndb.Model):
   """Sub model for representing an author."""
@@ -145,13 +155,8 @@ class MainPage(webapp2.RequestHandler):
     entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
     totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
 
-    # Get list of unique payees
-    # Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
-    # Therefore using obj.payee to access payee name
-    payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
-    payees = []
-    for obj in payeeObjects:
-      payees.append(obj.payee)
+    # Get a list of all unique payees so we can create the auto-suggest list for the user
+    payees = getAllUniquePayees(exp_traq_name)
 
     user = users.get_current_user()
     if user:
@@ -219,7 +224,21 @@ class EntryHandler(webapp2.RequestHandler):
       entry.datetime = datetime.datetime.utcnow()
 
     entry.amount = int(self.request.get('amount'))
+
+    # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
+    # Get a list of all unique payees so we could see if payee matches any of them in a 
+    # case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
     entry.payee = self.request.get('payee').strip()
+    payees = getAllUniquePayees(exp_traq_name)
+    for p in payees:
+      if entry.payee.lower() == p.lower():
+        entry.payee = p
+        break
+    # NOTE: the above logic is not guaranteed to work for more complex cases like foreign accented 
+    # characters in unicode (see https://stackoverflow.com/a/29247821/1698938). Buf for my needs
+    # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
+    # accented Russian characters like й, Й, ё, Ё. 
+
     entry.comment = self.request.get('comment')
     entry.put()
 
