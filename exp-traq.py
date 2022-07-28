@@ -74,6 +74,24 @@ def getAllUniquePayees(exp_traq_name):
     payees.append(obj.payee)
   return payees
 
+# FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
+# Get a list of all unique payees so we could see if payee_from_form matches any of them in a 
+# case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
+def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
+  canonical_payee = payee_from_form.strip()
+  payees = getAllUniquePayees(exp_traq_name)
+  for p in payees:
+    if canonical_payee.lower() == p.lower():
+      canonical_payee = p
+      break
+  return canonical_payee
+  # NOTE: the above logic is not guaranteed to work for more complex cases like foreign accented 
+  # characters in unicode (see https://stackoverflow.com/a/29247821/1698938). Buf for my needs
+  # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
+  # accented Russian characters like "i kratkoe" and "yo" (GAE barfed when I typed the actual
+  # letters here, so changed them to their transliterations :-(
+
+
 class Author(ndb.Model):
   """Sub model for representing an author."""
   identity = ndb.StringProperty(indexed=False)
@@ -226,18 +244,7 @@ class EntryHandler(webapp2.RequestHandler):
     entry.amount = int(self.request.get('amount'))
 
     # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
-    # Get a list of all unique payees so we could see if payee matches any of them in a 
-    # case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
-    entry.payee = self.request.get('payee').strip()
-    payees = getAllUniquePayees(exp_traq_name)
-    for p in payees:
-      if entry.payee.lower() == p.lower():
-        entry.payee = p
-        break
-    # NOTE: the above logic is not guaranteed to work for more complex cases like foreign accented 
-    # characters in unicode (see https://stackoverflow.com/a/29247821/1698938). Buf for my needs
-    # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
-    # accented Russian characters like й, Й, ё, Ё. 
+    entry.payee = getCanonicalPayeeSpelling(exp_traq_name, self.request.get('payee'))
 
     entry.comment = self.request.get('comment')
     entry.put()
@@ -264,10 +271,11 @@ class EntryHandler(webapp2.RequestHandler):
 
   def put(self, key): # key is the urlsafe ndb key of the entry being updated
     # print(str(self.request))
+    exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
     date = self.request.get('date') 
     amount = self.request.get('amount')
-    payee = self.request.get('payee').strip()
+    payee = self.request.get('payee')
     comment = self.request.get('comment')
 
     # Get entry from db
@@ -284,8 +292,9 @@ class EntryHandler(webapp2.RequestHandler):
       entry.amount = int(amount)
   
     if payee:
-      entry.payee = payee
-    
+      # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
+      entry.payee = getCanonicalPayeeSpelling(exp_traq_name, payee)
+        
     if comment:
       entry.comment = comment
     
