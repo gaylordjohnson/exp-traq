@@ -16,46 +16,49 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 DEFAULT_EXP_TRAQ_NAME = 'default'
 DEFAULT_FOR_TOP_N = 10
 
-# We set a parent key on the expense entries to ensure that they are all
-# in the same entity group. Queries across the single entity group
-# will be consistent. However, the write rate should be limited to
-# ~1/second.
 def exp_traq_key(exp_traq_name=DEFAULT_EXP_TRAQ_NAME):
-  """Constructs a Datastore key for an exp-treq entity. We use exp_traq_name as the key."""
+  """Constructs a Datastore key for an exp-treq entity. We use exp_traq_name as the key.
+  We set a parent key on the expense entries to ensure that they are all in the same entity group. 
+  Queries across the single entity group will be consistent. However, the write rate should be 
+  limited to ~1/second.
+  """
   return ndb.Key('Exp-traq', exp_traq_name)
 
-# Say, I messed up a payee name so now there are several different spellings, messing up my auto-suggest list
-# Run this migration, which takes a urlsafe key and what the payee should be changed to, for as many entries
-# as desired, and runs the update.
 def runPayeeContentMigration():
-    changes = [
-        # [<urlsafe key>,<new payee>,<new comment>]
-        # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
-        # NOTE2: Set value to "" if want it empty.
-        # NOTE3: payee can't be an empty string
+  """Say, I messed up a payee name so now there are several different spellings, messing up my auto-suggest list
+  Run this migration, which takes a urlsafe key and what the payee should be changed to, for as many entries
+  as desired, and runs the update.
+  """
+  changes = [
+    # [<urlsafe key>,<new payee>,<new comment>]
+    # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
+    # NOTE2: Set value to "" if want it empty.
+    # NOTE3: payee can't be an empty string
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","BLAH PAYEE 2"],        
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDArwoM","BLAH PAYEE 3"],
-    ]
-    print('Running migration (' + str(len(changes)) + ' items):')
-    for change in changes:
-        print(change)
-        key = ndb.Key(urlsafe = change[0])
-        entry = key.get()
-        entry.payee = change[1]
-        entry.put()
+  ]
+  print('Running migration (' + str(len(changes)) + ' items):')
+  for change in changes:
+    print(change)
+    key = ndb.Key(urlsafe = change[0])
+    entry = key.get()
+    entry.payee = change[1]
+    entry.put()
 
-# First see my stackoverflow question for context: 
-#   https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
-# This migration takes all the old entries, reads them into the now updated class definition - where Entity.payee is indexed
-# - and writes entries right back to the datastore, changing them from unindexed to indexed! Ta da!
 def runPayeeTypeMigration(exp_traq_name):
+  """First see my stackoverflow question for context: 
+  https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
+  This migration takes all the old entries, reads them into the now updated class definition - where Entity.payee is indexed
+  - and writes entries right back to the datastore, changing them from unindexed to indexed! Ta da!
+  """
   entries_query = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp)
   entries = entries_query.fetch()
   for entry in entries:
     entry.put()
 
-# Returns a list of unique trackers and total number of entries across all trackers
 def getInfoAboutAllTrackers():
+  """Returns a list of unique trackers and total number of entries across all trackers
+  """
   entries = Entry.query().fetch() # Expensive operation, returns ALL entries, across ALL trackers
   count = len(entries)
   uniqueTrackers = set([])
@@ -64,9 +67,10 @@ def getInfoAboutAllTrackers():
   return list(uniqueTrackers), count
 
 def getUniquePayees(exp_traq_name):
-  """Get list of unique payees.
+  """Get the list of unique payees.
   Note: payeeObjects are **Entry** objects with only payee property filled 
-  (since we're doing a projection). Therefore using obj.payee to access payee name"""    
+  (since we're doing a projection). Therefore using obj.payee to access payee name
+  """    
   payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
   payees = []
   for obj in payeeObjects:
@@ -80,36 +84,39 @@ def getUniquePayees(exp_traq_name):
   payees.sort(key = lambda x: x.lower())
   return payees
 
-# FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
-# Get a list of all unique payees so we could see if payee_from_form matches any of them in a 
-# case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
 def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
+  """Get a list of all unique payees so we could see if payee_from_form matches any of them in a 
+  case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
+  """
   canonical_payee = payee_from_form.strip()
   payees = getUniquePayees(exp_traq_name)
   for p in payees:
     if canonical_payee.lower() == p.lower():
       canonical_payee = p
       break
-  return canonical_payee
   # NOTE: the above logic is not guaranteed to work for more complex cases like foreign accented 
   # characters in unicode (see https://stackoverflow.com/a/29247821/1698938). Buf for my needs
   # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
   # accented Russian characters like "i kratkoe" and "yo" (GAE barfed when I typed the actual
   # letters here, so changed them to their transliterations :-(
+  return canonical_payee
 
 class Author(ndb.Model):
-  """Sub model for representing an author."""
+  """Sub model for representing an author.
+  """
   identity = ndb.StringProperty(indexed=False)
   email = ndb.StringProperty(indexed=False)
 
 class Entry(ndb.Model):
-  """A main model for representing an individual expense entry."""
+  """A main model for representing an individual expense entry.
+  """
   datetime = ndb.DateTimeProperty(indexed=True, required=True)
   amount = ndb.IntegerProperty(indexed=False, required=True)
-  #payee = ndb.StringProperty(indexed=False, required=True)
-  # Changed to indexed, which is required to do a projection (see below and https://cloud.google.com/appengine/docs/legacy/standard/python/datastore/projectionqueries)
+
+  # Changing to indexed, which is required to do a projection (see below and https://cloud.google.com/appengine/docs/legacy/standard/python/datastore/projectionqueries)
   # DAMN this was hard: see my Stackoverflow question, which I eventually figured out and answered myself:
   # https://stackoverflow.com/questions/53623464/gae-python-ndb-projection-query-working-in-development-but-not-in-production
+  #payee = ndb.StringProperty(indexed=False, required=True)
   payee = ndb.StringProperty(indexed=True, required=True)
   comment = ndb.StringProperty(indexed=False)
 
@@ -118,14 +125,16 @@ class Entry(ndb.Model):
   author = ndb.StructuredProperty(Author)
   timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
-#[mk:] from https://cloud.google.com/appengine/docs/python/datastore/typesandpropertyclasses#datetime
 class EasternTZInfo(datetime.tzinfo):
-  """Implementation of the Eastern timezone."""
+  """Implementation of the Eastern timezone. 
+  Source: https://cloud.google.com/appengine/docs/python/datastore/typesandpropertyclasses#datetime
+  """
   def utcoffset(self, dt):
     return datetime.timedelta(hours=-5) + self.dst(dt)
 
   def _FirstSunday(self, dt):
-    """First Sunday on or after dt."""
+    """First Sunday on or after dt.
+    """
     return dt + datetime.timedelta(days=(6-dt.weekday()))
 
   def dst(self, dt):
@@ -145,17 +154,24 @@ class EasternTZInfo(datetime.tzinfo):
     else:
       return "EDT"
 
-# Handler class for managing the main page
 class MainPage(webapp2.RequestHandler):
+  """Handler class for managing the main page
+  """
+
   def get(self):
+    """Handler for HTTP GET. This gets the content of our application. Note: POST, PUT, and DELETE
+    are implemented in the next class below. In some cases they redirect back to the main page
+    to get the page content updated. A more efficient approach would be to do everything via AJAX
+    and dynamically update the relevant parts of the DOM. BUT it's hard to do since my app uses
+    a backend framework. This would have been a breeze in Vue, React, or another FE framework.
+    As it is, that all is not worth it; it's easier to simply reload the entire page.
+    """
     # print(str(self.request))
 
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
-    # XX ideally this logic should be fixed to avoid the following bug:
-    # User modifies query string param to a non-number, then int() 
-    # throws exception.
-    fetchLimit = DEFAULT_FOR_TOP_N # Default value - this makes load time much speedier than loading everything
+    # Default value - this makes load time much speedier than loading everything
+    fetchLimit = DEFAULT_FOR_TOP_N 
     show = self.request.get('show')
     if show:
       if show == 'all':
@@ -219,9 +235,11 @@ class MainPage(webapp2.RequestHandler):
     template = JINJA_ENVIRONMENT.get_template('index.html')
     self.response.write(template.render(template_values))
 
-# Handler class for managing CRUD operations on individual entries
-# We don't have get (it's handled by MainPage), but we have post, put, and delete
 class EntryHandler(webapp2.RequestHandler):
+  '''Handler class for managing CRUD operations on individual entries
+  We don't have get (it's handled by MainPage, above), but we have post, put, and delete
+  '''
+
   def post(self):
     #print(str(self.request))
 
@@ -247,10 +265,7 @@ class EntryHandler(webapp2.RequestHandler):
       entry.datetime = datetime.datetime.utcnow()
 
     entry.amount = int(self.request.get('amount'))
-
-    # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
     entry.payee = getCanonicalPayeeSpelling(exp_traq_name, self.request.get('payee'))
-
     entry.comment = self.request.get('comment')
     entry.put()
 
@@ -274,7 +289,10 @@ class EntryHandler(webapp2.RequestHandler):
       query_params['lastXpost'] = xpostTo
     self.redirect('/?' + urllib.urlencode(query_params))
 
-  def put(self, key): # key is the urlsafe ndb key of the entry being updated
+  def put(self, key): 
+    '''key is the urlsafe ndb key of the entry being updated
+    '''
+
     # print(str(self.request))
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
@@ -297,7 +315,6 @@ class EntryHandler(webapp2.RequestHandler):
       entry.amount = int(amount)
   
     if payee:
-      # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
       entry.payee = getCanonicalPayeeSpelling(exp_traq_name, payee)
         
     if comment:
@@ -308,7 +325,9 @@ class EntryHandler(webapp2.RequestHandler):
 
     # We're reloading page in JS. Nothing to do here; we're done
 
-  def delete(self, key): # key is the urlsafe ndb key of the entry being deleted
+  def delete(self, key): 
+    '''key is the urlsafe ndb key of the entry being deleted
+    '''
     # print(str(self.request))
 
     entry_key = ndb.Key(urlsafe = key)

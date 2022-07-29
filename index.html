@@ -201,11 +201,11 @@
             </ul>
             {% endif %}
           <li>Payees ({{ uniquePayees|count }}) in tracker '{{exp_traq_name}}':
-            <ul>
+            <ol>
               {% for uniquePayee in uniquePayees %}
               <li>{{ uniquePayee }} <i class="material-icons md-16">lens</i> <a href="#" onclick="populatePayee('{{ uniquePayee }}')">Create entry</a></li>
               {% endfor %}
-            </ul>
+            </ol>
           </li>
         </ul>
       </div>
