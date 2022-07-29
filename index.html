@@ -69,7 +69,7 @@
           <div class="form-group row">
             <label class="col-2 col-form-label">Amount</label>
             <div class="col-10">
-              <input class="form-control" name="amount" type="number" step="1" required autofocus>
+              <input class="form-control" id="amountField_mainForm" name="amount" type="number" step="1" required autofocus>
             </div>
           </div>
 
@@ -185,25 +185,31 @@
       </div>
       <!-- END DATA DISPLAY -->
 
-      <!-- TOOLS SECTION -->
-      <div class="alert alert-info" role="alert">
-        Tools:
+      <!-- INFO SECTION -->
+      <div class="alert alert-warning" role="alert">
         <ul>
           <li>List all trackers: <a href='/?listTrackers'>'/?listTrackers'</a></li>
             {% if uniqueTrackers|length > 0 %}
-              <ul>
-                <li>Unique trackers:</li>
+            <ul>
+              <li>Unique trackers:</li>
                 <ul>
                   {% for tracker in uniqueTrackers %}
                     <li><a href='/?exp_traq_name={{ tracker }}'>{{ tracker }}</a></li>
                   {% endfor %}
                 </ul>
-                <li>{{ entryCountAcrossAllTrackers }} entries across all trackers</li>
-              </ul>
+              <li>{{ entryCountAcrossAllTrackers }} entries across all trackers</li>
+            </ul>
             {% endif %}
+          <li>Payees ({{ uniquePayees|count }}) in tracker '{{exp_traq_name}}':
+            <ul>
+              {% for uniquePayee in uniquePayees %}
+              <li>{{ uniquePayee }} <i class="material-icons md-16">lens</i> <a href="#" onclick="populatePayee('{{ uniquePayee }}')">Create entry</a></li>
+              {% endfor %}
+            </ul>
+          </li>
         </ul>
       </div>
-      <!-- END TOOLS SECTION -->
+      <!-- END INFO SECTION -->
 
     </div> <!-- END container -->
 

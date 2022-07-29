@@ -196,6 +196,16 @@ window.addEventListener('load', function() {
   });
 });
 
+//
+// I've added in the html a list of all payees in a tracker. 
+// Clicking a payee calls this function, which populates the Payee field with the 
+// selected payee and places focus into the Amount field.
+//
+function populatePayee(payeeName) {
+  document.getElementById("payeeField_mainForm").value = payeeName;
+  document.getElementById("amountField_mainForm").focus();
+}
+
 function deleteEntry(id) {
   var okToDelete = confirm("OK to delete entry?");
   if (okToDelete == true) {

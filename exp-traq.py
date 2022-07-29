@@ -7,7 +7,6 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 import jinja2
 import webapp2
-import timeit
 
 JINJA_ENVIRONMENT = jinja2.Environment(
   loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -64,14 +63,21 @@ def getInfoAboutAllTrackers():
     uniqueTrackers.add(entry.key.parent().id())
   return list(uniqueTrackers), count
 
-# Get list of unique payees
-# Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
-# Therefore using obj.payee to access payee name    
-def getAllUniquePayees(exp_traq_name):
+def getUniquePayees(exp_traq_name):
+  """Get list of unique payees.
+  Note: payeeObjects are **Entry** objects with only payee property filled 
+  (since we're doing a projection). Therefore using obj.payee to access payee name"""    
   payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
   payees = []
   for obj in payeeObjects:
     payees.append(obj.payee)
+  # Note: the order() call above sorts alphabetically in a way that capitals come before lower-case letters.
+  # Seems (https://cloud.google.com/datastore/docs/concepts/queries#datastore-datastore-basic-query-python)
+  # that case-insensitive ordering is not supported (if the link above applies to the stuff below; not 100% sure)
+  # Therefore I'll do case-insensitive sort here in python, though is's not the most efficient thing to do.
+  # Also note: if I'm doing the below, why am I keeping the order() call above? As mentioned elsewhere in this file,
+  # the below way to sort may not work for all unicode situations (Cmd-F for 'unicode'), but maybe order() does...
+  payees.sort(key = lambda x: x.lower())
   return payees
 
 # FIX FOR https://github.com/gaylordjohnson/exp-traq/issues/8:
@@ -79,7 +85,7 @@ def getAllUniquePayees(exp_traq_name):
 # case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
 def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   canonical_payee = payee_from_form.strip()
-  payees = getAllUniquePayees(exp_traq_name)
+  payees = getUniquePayees(exp_traq_name)
   for p in payees:
     if canonical_payee.lower() == p.lower():
       canonical_payee = p
@@ -90,7 +96,6 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
   # accented Russian characters like "i kratkoe" and "yo" (GAE barfed when I typed the actual
   # letters here, so changed them to their transliterations :-(
-
 
 class Author(ndb.Model):
   """Sub model for representing an author."""
@@ -174,7 +179,7 @@ class MainPage(webapp2.RequestHandler):
     totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
 
     # Get a list of all unique payees so we can create the auto-suggest list for the user
-    payees = getAllUniquePayees(exp_traq_name)
+    payees = getUniquePayees(exp_traq_name)
 
     user = users.get_current_user()
     if user:
