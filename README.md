@@ -85,7 +85,7 @@ The suggested index for this query is:
 ```
 It sounded like GCloud was still working on creating the index. Yes, I confirmed it by going to https://console.cloud.google.com/datastore/indexes. This new index had a spinner spinning, indicating that indexing was still in progress. I waited for the spinner to finish, ran my app again, and this time everything worked.
 
-### 3. Where is my aoo's data in GCloud?
+### 3. Where is my app's data in GCloud?
 
 Here: https://console.cloud.google.com/datastore
 
