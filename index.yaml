@@ -10,3 +10,11 @@ indexes:
   ancestor: yes
   properties:
   - name: payee
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: payee
+  - name: datetime
+    direction: desc
+  - name: timestamp
+    direction: desc

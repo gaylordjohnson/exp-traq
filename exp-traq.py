@@ -7,6 +7,7 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 import jinja2
 import webapp2
+import locale
 
 JINJA_ENVIRONMENT = jinja2.Environment(
   loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -101,6 +102,25 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   # letters here, so changed them to their transliterations :-(
   return canonical_payee
 
+def getTotalAndAvgAmountStrings(entries):
+  '''Calculate total and avg amounts and format them as currency strings,
+  the total with no decimal places, the avg with 2 decimal places.
+  '''
+  totalAmt = 0
+  avgAmt = 0
+  for entry in entries:
+    totalAmt += entry.amount
+  if len(entries):
+    avgAmt = float(totalAmt) / len(entries)
+
+  # Using locale is the *right* way, and this worked in python in terminal,
+  # BUT GAE barfed with a bunch of exceptions; not worth spending the time to figure it out...
+  # locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+  # return locale.currency(totalAmt, grouping=True), locale.currency(avgAmt, grouping=True)
+
+  # Instead, will use this alternative (from https://bit.ly/3Q8sZ2c)
+  return "{:0,.0f}".format(totalAmt), "{:0,.2f}".format(avgAmt)
+
 class Author(ndb.Model):
   """Sub model for representing an author.
   """
@@ -191,8 +211,43 @@ class MainPage(webapp2.RequestHandler):
     if 'listTrackers' in self.request.arguments(): # Checks for presence of 'listTrackers' param
       uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()
 
-    entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
-    totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
+    payeeToFilter = self.request.get('payee')
+    if payeeToFilter:
+      filteringByPayee = True
+      # Note: to filter all values by a payee, we need to do a "filter" query.
+      # Documentation: https://cloud.google.com/appengine/docs/legacy/standard/python/ndb/queries#filter_by_prop
+
+      # Removing fetchLimit arg and commenting out the count() query - see explanation below
+      # entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
+      entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).order(-Entry.datetime).order(-Entry.timestamp).fetch()
+      # totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).count()
+    else:
+      filteringByPayee = False
+
+      # Removing fetchLimit arg and commenting out the count() query - see explanation below
+      # entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
+      entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch()
+      # totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
+
+    #xx IMPORTANT
+    # I had implemented the "show last 10" logic because getting all entries was slow. But now I want to 
+    # display data such as total amount and avg. amount, even when showing only last 10 entries. Don't 
+    # think there's a way to do so easily in the DB (maybe via a projection query on amount; let
+    # me leave it as 'to try later'). So I'll need to retrieve all, calculate total and avg, and only 
+    # display 'last 10'. I don't know where the 'show all' slowness originated: from the query taking 
+    # a long time? or from me passing ALL entries down to the browser? My hunch is it might be
+    # the latter. So I'll calculate total and avg here in Python, then prune the list of entries, and
+    # only pass the 'last 10' to the browser. Maybe that will let me calc what I need and still be fast.
+    # THEREFORE, I'm doing the following above ^
+    # -- removing the 'fetchLimit' arg from the queries above
+    # -- commenting out the 'count()' queries above
+    # -- then calculating stats and pruning the list of entries, below.
+    # If it proves slow, I'll have to undo these changes.
+    totalEntries = len(entries)
+    totalAmount, avgAmount = getTotalAndAvgAmountStrings(entries)
+    if fetchLimit:
+      # Prune entries to keep only the first fetchLimit entries
+      entries = entries[:fetchLimit]
 
     # Get a list of all unique payees so we can create the auto-suggest list for the user
     payees = getUniquePayees(exp_traq_name)
@@ -225,6 +280,10 @@ class MainPage(webapp2.RequestHandler):
       'defaultForTopN': DEFAULT_FOR_TOP_N,
       'uniqueTrackers': uniqueTrackers,
       'entryCountAcrossAllTrackers': entryCountAcrossAllTrackers,
+      'filteringByPayee': filteringByPayee,
+      'payeeToFilter': payeeToFilter,
+      'totalAmount': totalAmount,
+      'avgAmount': avgAmount,
     }
 
     # If we just added an entry and xposted it to another tracker, add the target tracker

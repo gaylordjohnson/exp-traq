@@ -10,6 +10,7 @@ class State {
     this.traq = null;
     this.showTopN = true;
     this.showAsTable = false;
+    this.payeeToFilter = "";
   }
   // Exp traq name must be passed in, because it comes from the server via jinja2 
   // template and main.js doesn't have access to that.
@@ -29,12 +30,17 @@ class State {
       else
         this.showAsTable = false;
     }
+    if (urlParams.has('payee')) {
+      this.payeeToFilter = urlParams.get('payee');
+    }
   }
   reloadAsTable() {
     let loc = '/?exp_traq_name=' + this.traq;
     if (!this.showTopN)
       loc += '&show=all';
     loc += '&showAs=table';
+    if (this.payeeToFilter)
+      loc += '&payee=' + this.payeeToFilter;
     window.location = loc;
   }
   reloadAsList() {
@@ -42,6 +48,8 @@ class State {
     if (!this.showTopN)
       loc += '&show=all';
     loc += '&showAs=list';
+    if (this.payeeToFilter)
+      loc += '&payee=' + this.payeeToFilter;
     window.location = loc;
   }
   reloadShowAll() {
@@ -51,6 +59,8 @@ class State {
       loc += '&showAs=table';
     else
       loc += '&showAs=list';
+    if (this.payeeToFilter)
+      loc += '&payee=' + this.payeeToFilter;
     window.location = loc;
   }
   reloadShowTopN() {
@@ -59,7 +69,34 @@ class State {
       loc += '&showAs=table';
     else
       loc += '&showAs=list';
+    if (this.payeeToFilter)
+      loc += '&payee=' + this.payeeToFilter;
     window.location = loc;    
+  }
+  // I've added in the html a list of all payees in a tracker.
+  // Clicking 'View entries' next to a payee calls this function, which adds 'payee=<payee name>'
+  // to the query string and reloads the page. This will show all entries just for this payee.
+  reloadAsFilteredByPayee(payeeName) {
+    this.payeeToFilter = encodeURIComponent(payeeName);
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    // Need to urlencode the payee because nothing precludes the payee name from 
+    // having characters that aren't allowed in a URI, such as spaces and ampersands.
+    loc += '&payee=' + this.payeeToFilter;
+    window.location = loc;
+  }
+
+  removePayeeFilter() {
+    this.payeeToFilter = "";
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    window.location = loc;
   }
 }
 
@@ -198,10 +235,10 @@ window.addEventListener('load', function() {
 
 //
 // I've added in the html a list of all payees in a tracker. 
-// Clicking a payee calls this function, which populates the Payee field with the 
-// selected payee and places focus into the Amount field.
+// Clicking 'New entry' next to a payee calls this function, to populate the Payee field 
+// with the selected payee and place focus into the Amount field.
 //
-function populatePayee(payeeName) {
+function populatePayeeField(payeeName) {
   document.getElementById("payeeField_mainForm").value = payeeName;
   document.getElementById("amountField_mainForm").focus();
 }

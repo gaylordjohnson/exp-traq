@@ -51,7 +51,45 @@ Push changes back to the repository on GitHub:
 git push // Will ask for GitHub credentials 
 ```
 
-### 2. Using Google Cloud CLI
+### 2. SPECIAL NOTE on using datastore INDEXES in Google App Engine / Google Cloud (because it was pain in the butt to figure out...)
+
+If your code is doing some new kind of querying, it may be required to create a new index. For example, for this feature (https://github.com/gaylordjohnson/exp-traq/issues/10) I created a "filter"
+query by Payee. When I ran the code on my local dev setup, everything ran fine. But when I deployed my stuff to GCloud (gcloud app deploy - see next section) and attempted to run my code, I got a 500 with a stack trace, at the end of which was:
+```
+The suggested index for this query is:
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: payee
+  - name: datetime
+    direction: desc
+  - name: timestamp
+    direction: desc
+```
+I added this to index.yaml and redeployed, yet still got the same 500 error. So I dug around and found that I need to run the following command in my local terminal:
+```
+gcloud datastore indexes create index.yaml
+```
+...which initiates GCloud to create the index. I quickly tried to run my app again and got anotheer 500, this time ending in:
+```
+NeedIndexError: The index for this query is not ready to serve. See the Datastore Indexes page in the Admin Console.
+The suggested index for this query is:
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: payee
+  - name: datetime
+    direction: desc
+  - name: timestamp
+    direction: desc
+```
+It sounded like GCloud was still working on creating the index. Yes, I confirmed it by going to https://console.cloud.google.com/datastore/indexes. This new index had a spinner spinning, indicating that indexing was still in progress. I waited for the spinner to finish, ran my app again, and this time everything worked.
+
+### 3. Where is my aoo's data in GCloud?
+
+Here: https://console.cloud.google.com/datastore
+
+### 4. Using Google Cloud CLI
 
 Install Google Cloud CLI on Mac
 ```

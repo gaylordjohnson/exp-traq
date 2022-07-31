@@ -123,7 +123,16 @@
 
       <!-- MAIN DATA DISPLAY -->
       <div id="data">
-        {% if totalEntries <= defaultForTopN %}
+
+      {% if filteringByPayee %}
+        <!-- Filtering-by-payee box -->
+        <div class="payee-filter-info-box alert alert-info" role="alert">
+          Showing entries for payee <strong>{{ payeeToFilter }}</strong> <i class="material-icons md-16">lens</i>
+          <a href="#" onclick="state.removePayeeFilter()">Remove filter</a>
+        </div>
+      {% endif %}
+
+      {% if totalEntries <= defaultForTopN %}
           {{ totalEntries }} entries |
         {% else %}
           {% if entries|count < totalEntries %}
@@ -176,12 +185,27 @@
             {{ entry.dateWeekday }} <span class='dateYMD'>{{ entry.dateYMD }}</span> <i class="material-icons md-16">lens</i> 
             $<span class='amount'>{{ entry.amount }}</span> <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
-            <span class='comment'>{{ entry.comment }}</span>
-            <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit</a> |
-            <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a> 
+            <span class='comment'>{{ entry.comment }}</span> <i class="material-icons md-16">lens</i>
+            <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit</a>
+            | <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a>
+            {% if not filteringByPayee %}
+              | <a href="#" onclick="state.reloadAsFilteredByPayee('{{ entry.payee }}')">Filter by this payee</a>
+            {% endif %}
+             
           </div>
           {% endfor %}
         {% endif %}
+
+          <!-- Summary box: shows total amount, avg., etc. -->
+          <div class="summary-box alert alert-info" role="alert">
+            {{ totalEntries }} entries 
+            {% if filteringByPayee %}
+              for payee <strong>{{ payeeToFilter }}</strong>
+            {% endif %}
+            <i class="material-icons md-16">lens</i>
+            Total amount: ${{ totalAmount }} <i class="material-icons md-16">lens</i>
+            Avg. amount: ${{ avgAmount }} 
+          </div>        
       </div>
       <!-- END DATA DISPLAY -->
 
@@ -203,7 +227,11 @@
           <li>Payees ({{ uniquePayees|count }}) in tracker '{{exp_traq_name}}':
             <ol>
               {% for uniquePayee in uniquePayees %}
-              <li>{{ uniquePayee }} <i class="material-icons md-16">lens</i> <a href="#" onclick="populatePayee('{{ uniquePayee }}')">Create entry</a></li>
+              <li>{{ uniquePayee }} 
+                <i class="material-icons md-16">lens</i> 
+                <a href="#" onclick="state.reloadAsFilteredByPayee('{{ uniquePayee }}')">Filter by this payee</a> |
+                <a href="#" onclick="populatePayeeField('{{ uniquePayee }}')">New entry</a>
+              </li>
               {% endfor %}
             </ol>
           </li>
