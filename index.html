@@ -22,7 +22,7 @@
     <script src="/js/main.js"></script>
     <script>
       // Had to put this JS into HTML rather than main.js because it uses jinja2 preprocessing.      
-      console.log('Returned {{ entries|count }} entries of {{ totalEntries }}');
+      console.log('Returned {{ entries|count }} entries of {{ totalEntriesAfterPayeeFilter }}');
       console.log('{{ uniquePayees|count }} unique payees: {{ uniquePayees }}');
       state.initFromServerAndQueryString('{{exp_traq_name}}'); // state references a global defined in main.js
       console.log('State: ' + JSON.stringify(state))
@@ -132,14 +132,14 @@
         </div>
       {% endif %}
 
-      {% if totalEntries <= defaultForTopN %}
-          {{ totalEntries }} entries |
+      {% if totalEntriesAfterPayeeFilter <= defaultForTopN %}
+          {{ totalEntriesAfterPayeeFilter }} entries |
         {% else %}
-          {% if entries|count < totalEntries %}
-            {{ entries|count }} of {{ totalEntries }} entries |
+          {% if entries|count < totalEntriesAfterPayeeFilter %}
+            {{ entries|count }} of {{ totalEntriesAfterPayeeFilter }} entries |
             <a href="#" id="showAll" onclick="state.reloadShowAll()">Show all</a> |
           {% else %}
-            {{ totalEntries }} entries | 
+            {{ totalEntriesAfterPayeeFilter }} entries | 
             <a href="#" id="showTopN" onclick="state.reloadShowTopN()">Show last {{ defaultForTopN }}</a> |
           {% endif %}
         {% endif %}
@@ -163,7 +163,7 @@
               {% for entry in entries %}
               <tr>
                 <td>{{ entry.dateWeekday }} {{ entry.dateYMD }}</td>
-                <td style="text-align: right">${{ entry.amount }}</td>
+                <td style="text-align: right">${{ "{:0,.0f}".format(entry.amount) }}</td>
                 <td>{{ entry.payee }}</td>
                 <td>{{ entry.comment }}</td>
                 <td>{{ entry.author.email }}</td>
@@ -183,13 +183,13 @@
           {% for entry in entries %}
           <div id="{{ entry.key.urlsafe() }}" class="entry alert alert-secondary mb-0" >
             {{ entry.dateWeekday }} <span class='dateYMD'>{{ entry.dateYMD }}</span> <i class="material-icons md-16">lens</i> 
-            $<span class='amount'>{{ entry.amount }}</span> <i class="material-icons md-16">lens</i> 
+            $<span class='amount'>{{ "{:0,.0f}".format(entry.amount) }}</span> <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
             <span class='comment'>{{ entry.comment }}</span> <i class="material-icons md-16">lens</i>
             <a href="#editModal" data-toggle="modal" data-entry-id="{{ entry.key.urlsafe() }}">Edit</a>
             | <a href="#" onclick="deleteEntry('{{ entry.key.urlsafe() }}')">Delete</a>
             {% if not filteringByPayee %}
-              | <a href="#" onclick="state.reloadAsFilteredByPayee('{{ entry.payee }}')">Filter by this payee</a>
+              | <a href="#" onclick="state.reloadAsFilteredByPayee('{{ entry.payee }}')">Filter</a>
             {% endif %}
              
           </div>
@@ -198,13 +198,13 @@
 
           <!-- Summary box: shows total amount, avg., etc. -->
           <div class="summary-box alert alert-info" role="alert">
-            {{ totalEntries }} entries 
+            {{ totalEntriesAfterPayeeFilter }} entries 
             {% if filteringByPayee %}
               for payee <strong>{{ payeeToFilter }}</strong>
             {% endif %}
             <i class="material-icons md-16">lens</i>
-            Total amount: ${{ totalAmount }} <i class="material-icons md-16">lens</i>
-            Avg. amount: ${{ avgAmount }} 
+            Total amount: ${{ totalAmtAfterPayeeFilter }} <i class="material-icons md-16">lens</i>
+            Avg. amount: ${{ avgAmtAfterPayeeFilter }} 
           </div>        
       </div>
       <!-- END DATA DISPLAY -->
@@ -224,12 +224,13 @@
               <li>{{ entryCountAcrossAllTrackers }} entries across all trackers</li>
             </ul>
             {% endif %}
-          <li>Payees ({{ uniquePayees|count }}) in tracker '{{exp_traq_name}}':
+            <li>{{ uniquePayees|count }} payees (${{ "{:0,.0f}".format(totalAmtBeforePayeeFilter) }} total) in tracker '{{exp_traq_name}}':
             <ol>
               {% for uniquePayee in uniquePayees %}
-              <li>{{ uniquePayee }} 
+              <li><strong>{{ uniquePayee }}</strong> 
+                ({{ payeeMap[uniquePayee][1] }} entries, ${{ "{:0,.0f}".format(payeeMap[uniquePayee][0]) }} total)
                 <i class="material-icons md-16">lens</i> 
-                <a href="#" onclick="state.reloadAsFilteredByPayee('{{ uniquePayee }}')">Filter by this payee</a> |
+                <a href="#" onclick="state.reloadAsFilteredByPayee('{{ uniquePayee }}')">Filter</a> |
                 <a href="#" onclick="populatePayeeField('{{ uniquePayee }}')">New entry</a>
               </li>
               {% endfor %}

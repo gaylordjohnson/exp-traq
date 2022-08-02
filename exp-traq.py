@@ -67,7 +67,7 @@ def getInfoAboutAllTrackers():
     uniqueTrackers.add(entry.key.parent().id())
   return list(uniqueTrackers), count
 
-def getUniquePayees(exp_traq_name):
+def getUniquePayeesFromDbAndSort(exp_traq_name):
   """Get the list of unique payees.
   Note: payeeObjects are **Entry** objects with only payee property filled 
   (since we're doing a projection). Therefore using obj.payee to access payee name
@@ -90,7 +90,7 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
   """
   canonical_payee = payee_from_form.strip()
-  payees = getUniquePayees(exp_traq_name)
+  payees = getUniquePayeesFromDbAndSort(exp_traq_name)
   for p in payees:
     if canonical_payee.lower() == p.lower():
       canonical_payee = p
@@ -113,13 +113,23 @@ def getTotalAndAvgAmountStrings(entries):
   if len(entries):
     avgAmt = float(totalAmt) / len(entries)
 
-  # Using locale is the *right* way, and this worked in python in terminal,
-  # BUT GAE barfed with a bunch of exceptions; not worth spending the time to figure it out...
-  # locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-  # return locale.currency(totalAmt, grouping=True), locale.currency(avgAmt, grouping=True)
-
   # Instead, will use this alternative (from https://bit.ly/3Q8sZ2c)
   return "{:0,.0f}".format(totalAmt), "{:0,.2f}".format(avgAmt)
+
+def populatePayeeMap(entries):
+  '''Cycle through all entries and return a map of per-payee total amounts, 
+  as well as the overall total
+  '''
+  payeeMap = {}
+  totalAmount = 0
+  for entry in entries:
+    totalAmount += entry.amount
+    if entry.payee not in payeeMap:
+      payeeMap[entry.payee] = [entry.amount, 1] # Initialize amount and count of entries
+    else:
+      payeeMap[entry.payee][0] += entry.amount
+      payeeMap[entry.payee][1] += 1
+  return payeeMap, totalAmount
 
 class Author(ndb.Model):
   """Sub model for representing an author.
@@ -190,68 +200,6 @@ class MainPage(webapp2.RequestHandler):
 
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
-    # Default value - this makes load time much speedier than loading everything
-    fetchLimit = DEFAULT_FOR_TOP_N 
-    show = self.request.get('show')
-    if show:
-      if show == 'all':
-        fetchLimit = None
-      else:
-        fetchLimit = int(show)
-    
-    if self.request.get('runMigration') == 'PayeeContent':
-      runPayeeContentMigration()
-    elif self.request.get('runMigration') == 'PayeeType':
-      runPayeeTypeMigration(exp_traq_name)
-
-    # Optional tool for checking on all trackers.
-    # Invoke by including the 'listTrackers' query-string parameter (doesn't need to have a value)
-    uniqueTrackers = []
-    entryCountAcrossAllTrackers = -1
-    if 'listTrackers' in self.request.arguments(): # Checks for presence of 'listTrackers' param
-      uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()
-
-    payeeToFilter = self.request.get('payee')
-    if payeeToFilter:
-      filteringByPayee = True
-      # Note: to filter all values by a payee, we need to do a "filter" query.
-      # Documentation: https://cloud.google.com/appengine/docs/legacy/standard/python/ndb/queries#filter_by_prop
-
-      # Removing fetchLimit arg and commenting out the count() query - see explanation below
-      # entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
-      entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).order(-Entry.datetime).order(-Entry.timestamp).fetch()
-      # totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).filter(Entry.payee == payeeToFilter).count()
-    else:
-      filteringByPayee = False
-
-      # Removing fetchLimit arg and commenting out the count() query - see explanation below
-      # entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
-      entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch()
-      # totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
-
-    #xx IMPORTANT
-    # I had implemented the "show last 10" logic because getting all entries was slow. But now I want to 
-    # display data such as total amount and avg. amount, even when showing only last 10 entries. Don't 
-    # think there's a way to do so easily in the DB (maybe via a projection query on amount; let
-    # me leave it as 'to try later'). So I'll need to retrieve all, calculate total and avg, and only 
-    # display 'last 10'. I don't know where the 'show all' slowness originated: from the query taking 
-    # a long time? or from me passing ALL entries down to the browser? My hunch is it might be
-    # the latter. So I'll calculate total and avg here in Python, then prune the list of entries, and
-    # only pass the 'last 10' to the browser. Maybe that will let me calc what I need and still be fast.
-    # THEREFORE, I'm doing the following above ^
-    # -- removing the 'fetchLimit' arg from the queries above
-    # -- commenting out the 'count()' queries above
-    # -- then calculating stats and pruning the list of entries, below.
-    # If it proves slow, I'll have to undo these changes.
-    totalEntries = len(entries)
-    totalAmount, avgAmount = getTotalAndAvgAmountStrings(entries)
-    if fetchLimit:
-      # Prune entries to keep only the first fetchLimit entries
-      entries = entries[:fetchLimit]
-
-    # Get a list of all unique payees so we can create the auto-suggest list for the user
-    payees = getUniquePayees(exp_traq_name)
-
     user = users.get_current_user()
     if user:
       url = users.create_logout_url(self.request.uri)
@@ -260,7 +208,74 @@ class MainPage(webapp2.RequestHandler):
       url = users.create_login_url(self.request.uri)
       url_linktext = 'Log in'
 
-    # Convert all entries' datetime from UTC to Eastern
+    # Optional tools. Let's get them out of the way before the core code of this method.
+    if self.request.get('runMigration') == 'PayeeContent':
+      runPayeeContentMigration()
+    elif self.request.get('runMigration') == 'PayeeType':
+      runPayeeTypeMigration(exp_traq_name)
+    # Optional tool for checking on all trackers.
+    # Invoke by including the 'listTrackers' query-string parameter (doesn't need to have a value)
+    uniqueTrackers = []
+    entryCountAcrossAllTrackers = -1
+    if 'listTrackers' in self.request.arguments(): # Checks for presence of 'listTrackers' param
+      uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()
+
+    fetchLimit = DEFAULT_FOR_TOP_N 
+    show = self.request.get('show')
+    if show:
+      if show == 'all':
+        fetchLimit = None
+      else:
+        fetchLimit = int(show)
+    
+    payeeToFilter = self.request.get('payee')
+    if payeeToFilter:
+      filteringByPayee = True
+    else:
+      filteringByPayee = False
+
+    # xx IMPORTANT NOTE: since as of recently I'm expanding the app with new functionality
+    # like showing entries only for a specific payee, showing a list of unique payees with their totals,
+    # and other calculations like totals and averages for all requested entries, I think it no longer makes
+    # sense to filter or prune the entry list at the DB LEVEL. Instead it makes sense to grab ALL entries
+    # from the DB and do all my calculations in python. I originally implemented the 'show last N entries'
+    # logic because getting all entries was slow. HOWEVER, I don't know if the slowness was between
+    # Python and DB -- or -- between Python and the browser. If the latter, then grabbing everything
+    # from DB shounldn't be a bottleneck. Let's do this and see. Worse come to worse and this latest
+    # code proves slow, I can later implement
+    # an optional flow where there will be no calculations, and I'll only be grabbing 'last N entries'
+    # like before.
+    
+    # xx ALSO NOTE: with these changes we no longer need all the indexes we've created
+    # Let me keep them for now in case I need to revert some of the logic. I can remove 
+    # them in the long term if needed.
+
+    # There are 3 logical levels: 
+    #     all entries --> we calc stuff like the list of payees and spend per payee
+    #     a payee's entries (if payee filter requested) --> we calc # of entries, total spend, avg spend
+    #     last N entries (if last N requested) --> we send only the N entries to display in the browser
+
+    # Get all entries
+    entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch()
+
+    # Get a map of total amounts etc per payee; then pass the map to the HTML
+    payeeMap, totalAmtBeforePayeeFilter = populatePayeeMap(entries)
+    # Get unique list of payees sorted by descending amount of their total amounts
+    uniquePayees = sorted(payeeMap.keys(), key=lambda x: payeeMap[x], reverse=True)
+    
+    # If payee filter was requested, filter entries down to those from that payee
+    if filteringByPayee:
+      entries = [entry for entry in entries if entry.payee == payeeToFilter] # 'List comprehension' syntax
+
+    # Calc the stats for the remaining entries (e.g. either for a payee, or overall)
+    totalEntriesAfterPayeeFilter = len(entries)
+    totalAmtAfterPayeeFilter, avgAmtAfterPayeeFilter = getTotalAndAvgAmountStrings(entries)
+
+    # If LastN was requested, prune entries to keep only the first fetchLimit entries
+    if fetchLimit:
+      entries = entries[:fetchLimit]
+
+    # Convert entries' datetime from UTC to Eastern
     for entry in entries:
       # Today's date --> convert from UTC to Eastern -- WTF is this so HARD?!
       entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
@@ -272,18 +287,20 @@ class MainPage(webapp2.RequestHandler):
       'show': show,
       'user': user,
       'entries': entries,
-      'totalEntries': totalEntries,
-      'uniquePayees': payees,
+      'totalEntriesAfterPayeeFilter': totalEntriesAfterPayeeFilter,
+      'uniquePayees': uniquePayees,
       'exp_traq_name': urllib.quote_plus(exp_traq_name),
       'url': url,
       'url_linktext': url_linktext,
       'defaultForTopN': DEFAULT_FOR_TOP_N,
       'uniqueTrackers': uniqueTrackers,
       'entryCountAcrossAllTrackers': entryCountAcrossAllTrackers,
+      'payeeMap': payeeMap,
+      'totalAmtBeforePayeeFilter': totalAmtBeforePayeeFilter,
       'filteringByPayee': filteringByPayee,
       'payeeToFilter': payeeToFilter,
-      'totalAmount': totalAmount,
-      'avgAmount': avgAmount,
+      'totalAmtAfterPayeeFilter': totalAmtAfterPayeeFilter,
+      'avgAmtAfterPayeeFilter': avgAmtAfterPayeeFilter,
     }
 
     # If we just added an entry and xposted it to another tracker, add the target tracker
