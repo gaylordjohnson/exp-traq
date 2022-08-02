@@ -176,7 +176,13 @@ window.addEventListener('load', function() {
 
     // Now that we have entry id, we use some jQuery to get amount, payee, etc.
     // (recall that jQuery is required by Boostrap, so we get it for free)
-    const amount = $('#' + idOfEntryBeingEdited).find('.amount').text();
+
+    // Note: .amount (which has thouhsands separators) was causing the edit form not
+    // to show the amount, since comma is not considered a valid charactre in a number.
+    // To fix this, in index.html, I added a hidden element (class='UNFORMATTED-AMOUNT')
+    // which holds the unformatted amount (e.g. 1234 instead of $1,234)
+    const amount = $('#' + idOfEntryBeingEdited).find('.UNFORMATTED-AMOUNT').text();
+    
     const payee = $('#' + idOfEntryBeingEdited).find('.payee').text();
     const date = $('#' + idOfEntryBeingEdited).find('.dateYMD').text();
     const comment = $('#' + idOfEntryBeingEdited).find('.comment').text();
