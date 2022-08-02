@@ -103,8 +103,7 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   return canonical_payee
 
 def getTotalAndAvgAmountStrings(entries):
-  '''Calculate total and avg amounts and format them as currency strings,
-  the total with no decimal places, the avg with 2 decimal places.
+  '''Calculate total and avg amounts.
   '''
   totalAmt = 0
   avgAmt = 0
@@ -112,9 +111,7 @@ def getTotalAndAvgAmountStrings(entries):
     totalAmt += entry.amount
   if len(entries):
     avgAmt = float(totalAmt) / len(entries)
-
-  # Instead, will use this alternative (from https://bit.ly/3Q8sZ2c)
-  return "{:0,.0f}".format(totalAmt), "{:0,.2f}".format(avgAmt)
+  return totalAmt, avgAmt
 
 def populatePayeeMap(entries):
   '''Cycle through all entries and return a map of per-payee total amounts, 

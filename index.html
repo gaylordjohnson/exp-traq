@@ -203,8 +203,8 @@
               for payee <strong>{{ payeeToFilter }}</strong>
             {% endif %}
             <i class="material-icons md-16">lens</i>
-            Total amount: ${{ totalAmtAfterPayeeFilter }} <i class="material-icons md-16">lens</i>
-            Avg. amount: ${{ avgAmtAfterPayeeFilter }} 
+            Total amount: ${{ "{:0,.0f}".format(totalAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
+            Avg. amount: ${{ "{:0,.2f}".format(avgAmtAfterPayeeFilter) }} 
           </div>        
       </div>
       <!-- END DATA DISPLAY -->
