@@ -31,10 +31,10 @@ def runPayeeContentMigration():
   as desired, and runs the update.
   """
   changes = [
-    # [<urlsafe key>,<new payee>,<new comment>]
-    # NOTE: it's ok for these arrays to start at beginning of line, like in the comment below, and to have a trailing comma (I've tested it).
-    # NOTE2: Set value to "" if want it empty.
-    # NOTE3: payee can't be an empty string
+    # [<urlsafe key>,<new payee>],
+    # It's ok for these arrays to start at beginning of line, like in the comment below, 
+    # and to have a trailing comma (I've tested it). Payee can't be empty.
+
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDA7wgM","BLAH PAYEE 2"],        
 # ["aghkZXZ-Tm9uZXInCxIIRXhwLXRyYXEiB2RlZmF1bHQMCxIFRW50cnkYgICAgIDArwoM","BLAH PAYEE 3"],
   ]
