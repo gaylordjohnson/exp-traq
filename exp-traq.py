@@ -102,7 +102,7 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   # letters here, so changed them to their transliterations :-(
   return canonical_payee
 
-def getTotalAndAvgAmountStrings(entries):
+def getTotalAndAvgAmount(entries):
   '''Calculate total and avg amounts.
   '''
   totalAmt = 0
@@ -112,6 +112,25 @@ def getTotalAndAvgAmountStrings(entries):
   if len(entries):
     avgAmt = float(totalAmt) / len(entries)
   return totalAmt, avgAmt
+
+def getSummaryDataByYear(entries):
+  '''Returns a map of total, # entries, and avg by year
+  '''
+  yearMap = {}
+  for entry in entries:
+    year = entry.datetime.strftime('%Y')
+    if year not in yearMap:
+      yearMap[year] = [entry.amount, 1] # Initiate the running total and entry count
+    else:
+      yearMap[year][0] += entry.amount
+      yearMap[year][1] += 1
+  # The below is stupid, because I could do this calc in the jinja template in index.heml.
+  # But jinja is being difficult, throws exception if I call a function, e.g. float().
+  # I'm sure there's a way to make it work, but not worth it to me right now.
+  for year in yearMap.keys():
+    # The third entry in the list will be the average spend during that year.
+    yearMap[year].append( float(yearMap[year][0]) / yearMap[year][1] )
+  return yearMap
 
 def populatePayeeMap(entries):
   '''Cycle through all entries and return a map of per-payee total amounts, 
@@ -266,11 +285,7 @@ class MainPage(webapp2.RequestHandler):
 
     # Calc the stats for the remaining entries (e.g. either for a payee, or overall)
     totalEntriesAfterPayeeFilter = len(entries)
-    totalAmtAfterPayeeFilter, avgAmtAfterPayeeFilter = getTotalAndAvgAmountStrings(entries)
-
-    # If LastN was requested, prune entries to keep only the first fetchLimit entries
-    if fetchLimit:
-      entries = entries[:fetchLimit]
+    totalAmtAfterPayeeFilter, avgAmtAfterPayeeFilter = getTotalAndAvgAmount(entries)
 
     # Convert entries' datetime from UTC to Eastern
     for entry in entries:
@@ -279,7 +294,16 @@ class MainPage(webapp2.RequestHandler):
       entry.dateYMD = datetime.datetime.strftime(entry.datetime, '%Y-%m-%d')
       entry.dateWeekday = datetime.datetime.strftime(entry.datetime, '%a')
 
+    # Get a map of summary data (total, # entries, avg.) by year
+    yearMap = getSummaryDataByYear(entries)
+
+    # If LastN was requested, prune entries to keep only the first fetchLimit entries
+    if fetchLimit:
+      entries = entries[:fetchLimit]
+
     template_values = {
+      'yearMap': yearMap,
+      'sortedYears': sorted(yearMap.keys(), reverse=True),
       'showAs': self.request.get('showAs'),
       'show': show,
       'user': user,

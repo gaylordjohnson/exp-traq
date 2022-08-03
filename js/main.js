@@ -269,3 +269,17 @@ function deleteEntry(id) {
     ajaxRequest.send(null);
   }
 }
+
+function toggleSummaryBoxDetails() {
+  var x = document.getElementById("summary_box_details");
+  var btn = document.getElementById("show_hide_details_btn");
+  if (x.style.display === "none") {
+    x.style.display = "block";
+    btn.textContent = "Hide details";
+  } else {
+    x.style.display = "none";
+    btn.textContent = "Details";
+  }
+}
+
+

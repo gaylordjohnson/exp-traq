@@ -209,7 +209,26 @@
             {% endif %}
             <i class="material-icons md-16">lens</i>
             Total amount: ${{ "{:0,.0f}".format(totalAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
-            Avg. amount: ${{ "{:0,.2f}".format(avgAmtAfterPayeeFilter) }} 
+            Avg. amount: ${{ "{:0,.2f}".format(avgAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
+            <a href="#" onclick="toggleSummaryBoxDetails()" id="show_hide_details_btn">Details</a>
+            <div id="summary_box_details" style="display: none;">
+              <table>
+                <tr>
+                  <th>Year</th>
+                  <th>Total amount</th>
+                  <th># entries</th>
+                  <th>Avg. amount</th>
+                </tr>
+                {% for year in sortedYears %}
+                <tr>
+                  <td>{{ year }}</td>
+                  <td>${{ "{:0,.0f}".format(yearMap[year][0]) }}</td>
+                  <td>{{ yearMap[year][1] }}</td>
+                  <td>${{ "{:0,.2f}".format(yearMap[year][2]) }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
           </div>        
       </div>
       <!-- END DATA DISPLAY -->
