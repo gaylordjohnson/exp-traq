@@ -31,7 +31,7 @@ class State {
         this.showAsTable = false;
     }
     if (urlParams.has('payee')) {
-      this.payeeToFilter = urlParams.get('payee');
+      this.payeeToFilter = encodeURIComponent(urlParams.get('payee'));
     }
   }
   reloadAsTable() {
