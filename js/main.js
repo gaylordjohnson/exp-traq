@@ -216,12 +216,17 @@ window.addEventListener('load', function() {
     };
 
     var form = document.getElementById('editForm');
+
+    // Get value of attribute 'data-exptraqname'
+    // (see: https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes)
+    const exp_traq_name = form.dataset.exptraqname; 
+
     var formData = new FormData(form); // Get field values from form when form was submitted
     const amount = formData.get('amount');
     const payee = formData.get('payee');
     const date = formData.get('date');
     const comment = formData.get('comment');
-    console.log('Will PUT [' + date + '] [' + amount + '] [' + payee + '] [' + comment + ']');
+    console.log('Will PUT [' + exp_traq_name + '] [' + date + '] [' + amount + '] [' + payee + '] [' + comment + ']');
 
     ajaxRequest.open('PUT', 'entry/' + idOfEntryBeingEdited);
     // From my debugging, turns out webapp2 expects form parameters as application/x-www-form-urlencoded
@@ -230,7 +235,8 @@ window.addEventListener('load', function() {
     contentBody += 'amount=' + encodeURIComponent(amount) + '&';
     contentBody += 'payee=' + encodeURIComponent(payee) + '&';
     contentBody += 'date=' + encodeURIComponent(date) + '&';
-    contentBody += 'comment=' + encodeURIComponent(comment);
+    contentBody += 'comment=' + encodeURIComponent(comment) + '&';
+    contentBody += 'exp_traq_name=' + encodeURIComponent(exp_traq_name);
     ajaxRequest.send(contentBody); 
   
     // Not sure this is needed. Seems to work w/o it as well but 

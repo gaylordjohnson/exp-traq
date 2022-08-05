@@ -280,7 +280,7 @@
             <!-- NOTE: form has no action or method attributes because I need to do a PUT, yet html forms 
             only support GET and POST. Instead I attach a 'submit' event listener in main.js
             which intercepts form submission and does a PUT via AJAX instead. -->
-            <form id="editForm" autocomplete="off">
+            <form id="editForm" data-exptraqname="{{exp_traq_name}}" autocomplete="off">
                 <div class="form-group row">
                   <label class="col-2 col-form-label">Amount</label>
                   <div class="col-10">
