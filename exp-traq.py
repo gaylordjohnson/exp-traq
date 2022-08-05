@@ -406,11 +406,10 @@ class EntryHandler(webapp2.RequestHandler):
   def put(self, key): 
     '''key is the urlsafe ndb key of the entry being updated
     '''
-
     # print(str(self.request))
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
-    date = self.request.get('date') 
+    targetDateStr = self.request.get('date') 
     amount = self.request.get('amount')
     payee = self.request.get('payee')
     comment = self.request.get('comment')
@@ -420,17 +419,27 @@ class EntryHandler(webapp2.RequestHandler):
     entry = entry_key.get()
 
     # Update entry with info from the client
-    if date:
-      naive = datetime.datetime.strptime(date, '%Y-%m-%d')
-      naiveAdjusted = naive - EasternTZInfo().utcoffset(naive)
-      entry.datetime = naiveAdjusted
-    
-    if amount:
+
+    if amount: # the 'if' is redundant since FE ensures there will always be an amount
       entry.amount = int(amount)
   
-    if payee:
+    if payee: # the 'if' is redundant since FE ensures there will always be a payee
       entry.payee = getCanonicalPayeeSpelling(exp_traq_name, payee)
         
+    # If user has edited the date, take the datetime that came from the Datastore (is in UTC),
+    # convert to Eastern, adjust its Y-M-D to the new date specified by the user (this preserves
+    # the H-M-S part), convert the result back to UTC, and assign this datetime into the entry.
+    originalUtc = entry.datetime
+    originalEastern = originalUtc + EasternTZInfo().utcoffset(originalUtc)
+    originalEasternDateStr = str(originalEastern)[:10]
+    if targetDateStr != originalEasternDateStr: # User has edited date
+      targetYear = int(targetDateStr[:4])
+      targetMonth = int(targetDateStr[5:7])
+      targetDay = int(targetDateStr[8:10])
+      targetEastern = originalEastern.replace(year=targetYear, month=targetMonth, day=targetDay)
+      targetUtc = targetEastern - EasternTZInfo().utcoffset(targetEastern)
+      entry.datetime = targetUtc
+
     if comment:
       entry.comment = comment
     
