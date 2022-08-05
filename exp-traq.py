@@ -250,7 +250,7 @@ class MainPage(webapp2.RequestHandler):
     else:
       filteringByPayee = False
 
-    # xx IMPORTANT NOTE: since as of recently I'm expanding the app with new functionality
+    # IMPORTANT NOTE: since as of recently I'm expanding the app with new functionality
     # like showing entries only for a specific payee, showing a list of unique payees with their totals,
     # and other calculations like totals and averages for all requested entries, I think it no longer makes
     # sense to filter or prune the entry list at the DB LEVEL. Instead it makes sense to grab ALL entries
@@ -262,7 +262,7 @@ class MainPage(webapp2.RequestHandler):
     # an optional flow where there will be no calculations, and I'll only be grabbing 'last N entries'
     # like before.
     
-    # xx ALSO NOTE: with these changes we no longer need all the indexes we've created
+    # ALSO NOTE: with these changes we no longer need all the indexes we've created
     # Let me keep them for now in case I need to revert some of the logic. I can remove 
     # them in the long term if needed.
 
@@ -355,9 +355,26 @@ class EntryHandler(webapp2.RequestHandler):
 
     # Get submitted date, or use today's date
     if self.request.get('date'):
-      naive = datetime.datetime.strptime(self.request.get('date'), '%Y-%m-%d')
-      naiveAdjusted = naive - EasternTZInfo().utcoffset(naive)
-      entry.datetime = naiveAdjusted
+      targetDateStr = self.request.get('date')
+      targetYear = int(targetDateStr[:4])
+      targetMonth = int(targetDateStr[5:7])
+      targetDay = int(targetDateStr[8:10])
+
+      # WTF: though in terminal now() returns my current time and utcnow() returns the current UTC time,
+      # in this code here both return UTC time!!!! So I can't just take now() and replace 
+      # the date part with target date. Commenting out:
+      # naive = datetime.datetime.now().replace(year=targetYear, month=targetMonth, day=targetDay)
+
+      # Instead, I have to take UTC time, add easern TZ offset (which is negative) to convert to local time,
+      # then replace the date part with the target date, then convert back to UTC (by subtracting eastern TZ offset),
+      # then store that in entry.datetime. Then, in get(), I convert all entry.datetime to eastern time.
+      # (Per GAE documentation, all time info must be stored in UTC and converted to local time on retrieval 
+      # https://cloud.google.com/appengine/docs/legacy/standard/python/ndb/entity-property-reference#Date_and_Time)
+      utcNow = datetime.datetime.utcnow()
+      easternNow = utcNow + EasternTZInfo().utcoffset(utcNow)
+      targetEasternNow = easternNow.replace(year=targetYear, month=targetMonth, day=targetDay)
+      targetUtcNow = targetEasternNow - EasternTZInfo().utcoffset(targetEasternNow)
+      entry.datetime = targetUtcNow
     else:
       entry.datetime = datetime.datetime.utcnow()
 
