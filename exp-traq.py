@@ -7,6 +7,8 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 import jinja2
 import webapp2
+import logging
+import time
 
 JINJA_ENVIRONMENT = jinja2.Environment(
   loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -71,7 +73,10 @@ def getUniquePayeesFromDbAndSort(exp_traq_name):
   Note: payeeObjects are **Entry** objects with only payee property filled 
   (since we're doing a projection). Therefore using obj.payee to access payee name
   """    
+  fetchPayeesStart = time.time()
   payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
+  fetchPayeesElapsed = time.time() - fetchPayeesStart
+
   payees = []
   for obj in payeeObjects:
     payees.append(obj.payee)
@@ -82,14 +87,15 @@ def getUniquePayeesFromDbAndSort(exp_traq_name):
   # Also note: if I'm doing the below, why am I keeping the order() call above? As mentioned elsewhere in this file,
   # the below way to sort may not work for all unicode situations (Cmd-F for 'unicode'), but maybe order() does...
   payees.sort(key = lambda x: x.lower())
-  return payees
+
+  return payees, fetchPayeesElapsed
 
 def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   """Get a list of all unique payees so we could see if payee_from_form matches any of them in a 
   case-INSENSITIVE way, then use the canonical one (from the db) instead of the one just submitted
   """
   canonical_payee = payee_from_form.strip()
-  payees = getUniquePayeesFromDbAndSort(exp_traq_name)
+  payees, fetchPayeesElapsed = getUniquePayeesFromDbAndSort(exp_traq_name)
   for p in payees:
     if canonical_payee.lower() == p.lower():
       canonical_payee = p
@@ -99,7 +105,7 @@ def getCanonicalPayeeSpelling(exp_traq_name, payee_from_form):
   # it works fine (e.g. payees in English and potentially some Russian). I even tested it for
   # accented Russian characters like "i kratkoe" and "yo" (GAE barfed when I typed the actual
   # letters here, so changed them to their transliterations :-(
-  return canonical_payee
+  return canonical_payee, fetchPayeesElapsed
 
 def getTotalAndAvgAmount(entries):
   '''Calculate total and avg amounts.
@@ -203,6 +209,7 @@ class MainPage(webapp2.RequestHandler):
   """Handler class for managing the main page
   """
 
+  #===================================== GET =====================================
   def get(self):
     """Handler for HTTP GET. This gets the content of our application. Note: POST, PUT, and DELETE
     are implemented in the next class below. In some cases they redirect back to the main page
@@ -212,6 +219,7 @@ class MainPage(webapp2.RequestHandler):
     As it is, that all is not worth it; it's easier to simply reload the entire page.
     """
     # print(str(self.request))
+    getMethodStart = time.time()
 
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
@@ -271,7 +279,9 @@ class MainPage(webapp2.RequestHandler):
     #     last N entries (if last N requested) --> we send only the N entries to display in the browser
 
     # Get all entries
+    fetchEntriesStart = time.time()
     entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch()
+    logging.debug('GET method -> fetch entries from datastore: %.3f s' % (time.time() - fetchEntriesStart))
 
     # Get a map of total amounts etc per payee; then pass the map to the HTML
     payeeMap, totalAmtBeforePayeeFilter = populatePayeeMap(entries)
@@ -331,13 +341,17 @@ class MainPage(webapp2.RequestHandler):
     template = JINJA_ENVIRONMENT.get_template('index.html')
     self.response.write(template.render(template_values))
 
+    logging.debug('GET method: %.3f s' % (time.time() - getMethodStart))
+
 class EntryHandler(webapp2.RequestHandler):
   '''Handler class for managing CRUD operations on individual entries
   We don't have get (it's handled by MainPage, above), but we have post, put, and delete
   '''
 
+  #===================================== POST =====================================
   def post(self):
     #print(str(self.request))
+    postMethodStart = time.time()
 
     # From GAE docs: "We set the same parent key on the 'Entry' to ensure each
     # Entry is in the same entity group. Queries across the
@@ -378,9 +392,15 @@ class EntryHandler(webapp2.RequestHandler):
       entry.datetime = datetime.datetime.utcnow()
 
     entry.amount = int(self.request.get('amount'))
-    entry.payee = getCanonicalPayeeSpelling(exp_traq_name, self.request.get('payee'))
+
+    entry.payee, fetchPayeesElapsed = getCanonicalPayeeSpelling(exp_traq_name, self.request.get('payee'))
+    logging.debug('POST method -> fetch canonical payees from datastore: %.3f s' % fetchPayeesElapsed)
+
     entry.comment = self.request.get('comment')
+
+    writeEntryStart = time.time()
     entry.put()
+    logging.debug('POST method -> write entry to datastore: %.3f s' % (time.time() - writeEntryStart))
 
     # If a cross-post was requested, create a copy of entry and post it into the other tracker
     xpostTo = self.request.get('xpost')
@@ -391,7 +411,10 @@ class EntryHandler(webapp2.RequestHandler):
       entry2.amount = entry.amount
       entry2.payee = entry.payee
       entry2.comment = entry.comment
+      
+      writeEntryStart = time.time()
       entry2.put()
+      logging.debug('POST method -> x-post entry to datastore: %.3f s' % (time.time() - writeEntryStart))
 
     query_params = {
       'exp_traq_name': exp_traq_name, 
@@ -402,10 +425,15 @@ class EntryHandler(webapp2.RequestHandler):
       query_params['lastXpost'] = xpostTo
     self.redirect('/?' + urllib.urlencode(query_params))
 
+    logging.debug('POST method: %.3f s' % (time.time() - postMethodStart))
+
+  #===================================== PUT =====================================
   def put(self, key): 
     '''key is the urlsafe ndb key of the entry being updated
     '''
     # print(str(self.request))
+    putMethodStart = time.time()
+
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
     targetDateStr = self.request.get('date') 
@@ -415,7 +443,9 @@ class EntryHandler(webapp2.RequestHandler):
 
     # Get entry from db
     entry_key = ndb.Key(urlsafe = key)
+    fetchEntryStart = time.time()
     entry = entry_key.get()
+    logging.debug('PUT method -> fetch entry from datastore: %.3f s' % (time.time() - fetchEntryStart))
 
     # Update entry with info from the client
 
@@ -423,7 +453,8 @@ class EntryHandler(webapp2.RequestHandler):
       entry.amount = int(amount)
   
     if payee: # the 'if' is redundant since FE ensures there will always be a payee
-      entry.payee = getCanonicalPayeeSpelling(exp_traq_name, payee)
+      entry.payee, fetchPayeesElapsed = getCanonicalPayeeSpelling(exp_traq_name, payee)
+      logging.debug('PUT method -> fetch canonical payees from datastore: %.3f s' % fetchPayeesElapsed)
         
     # If user has edited the date, take the datetime that came from the Datastore (is in UTC),
     # convert to Eastern, adjust its Y-M-D to the new date specified by the user (this preserves
@@ -443,17 +474,25 @@ class EntryHandler(webapp2.RequestHandler):
       entry.comment = comment
     
     # Write updated entry to db
+    writeEntryStart = time.time()
     entry.put()
+    logging.debug('PUT method -> write entry to datastore: %.3f s' % (time.time() - writeEntryStart))
+
+    logging.debug('PUT method: %.3f s' % (time.time() - putMethodStart))
 
     # We're reloading page in JS. Nothing to do here; we're done
 
+  #===================================== DELETE =====================================
   def delete(self, key): 
     '''key is the urlsafe ndb key of the entry being deleted
     '''
     # print(str(self.request))
 
     entry_key = ndb.Key(urlsafe = key)
+    deleteEntryStart = time.time()
     entry_key.delete()
+    logging.debug('DELETE method: %.3f s' % (time.time() - deleteEntryStart))
+
 
 app = webapp2.WSGIApplication([
   ('/', MainPage),
