@@ -183,11 +183,9 @@
           {% for entry in entries %}
           <div id="{{ entry.key.urlsafe() }}" class="entry alert alert-secondary mb-0" >
             {{ entry.dateWeekday }} <span class='dateYMD'>{{ entry.dateYMD }}</span> <i class="material-icons md-16">lens</i> 
-            $<span class='amount'>{{ "{:0,.0f}".format(entry.amount) }}</span> 
-            <!-- Adding this invisible element to contain the unformatted version of the amount.
-            I use this version when editing the entry, since the formatted version was causing
-            the amt not to show in the form due to the the comma (which doesn't validate as a number) -->
-            <span class='UNFORMATTED-AMOUNT' style='display: none'>{{ entry.amount }}</span>
+            <!-- Adding unformatted amt becasue using formatted amt in the entry edit form 
+              would break form validation (because of thousands separators) -->
+            $<span class='amount' data-unformatted-amount='{{ entry.amount }}'>{{ "{:0,.0f}".format(entry.amount) }}</span> 
             <i class="material-icons md-16">lens</i> 
             <span class='payee'>{{ entry.payee }}</span> <i class="material-icons md-16">lens</i>  
             <span class='comment'>{{ entry.comment }}</span> <i class="material-icons md-16">lens</i>
