@@ -221,6 +221,10 @@ class MainPage(webapp2.RequestHandler):
     # print(str(self.request))
     getMethodStart = time.time()
 
+    advancedView = False
+    if 'advanced' in self.request.arguments():
+      advancedView = True
+
     exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
 
     user = users.get_current_user()
@@ -311,6 +315,7 @@ class MainPage(webapp2.RequestHandler):
       entries = entries[:fetchLimit]
 
     template_values = {
+      'advancedView': advancedView,
       'yearMap': yearMap,
       'sortedYears': sorted(yearMap.keys(), reverse=True),
       'showAs': self.request.get('showAs'),

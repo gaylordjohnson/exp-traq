@@ -7,6 +7,7 @@
 // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
 class State {
   constructor() {
+    this.advancedView = false;
     this.traq = null;
     this.showTopN = true;
     this.showAsTable = false;
@@ -33,6 +34,9 @@ class State {
     if (urlParams.has('payee')) {
       this.payeeToFilter = encodeURIComponent(urlParams.get('payee'));
     }
+    if (urlParams.has('advanced')) {
+      this.advancedView = true;
+    }
   }
   reloadAsTable() {
     let loc = '/?exp_traq_name=' + this.traq;
@@ -41,6 +45,8 @@ class State {
     loc += '&showAs=table';
     if (this.payeeToFilter)
       loc += '&payee=' + this.payeeToFilter;
+    if (this.advancedView)
+      loc += '&advanced';
     window.location = loc;
   }
   reloadAsList() {
@@ -50,6 +56,8 @@ class State {
     loc += '&showAs=list';
     if (this.payeeToFilter)
       loc += '&payee=' + this.payeeToFilter;
+    if (this.advancedView)
+      loc += '&advanced';
     window.location = loc;
   }
   reloadShowAll() {
@@ -61,6 +69,8 @@ class State {
       loc += '&showAs=list';
     if (this.payeeToFilter)
       loc += '&payee=' + this.payeeToFilter;
+    if (this.advancedView)
+      loc += '&advanced';
     window.location = loc;
   }
   reloadShowTopN() {
@@ -71,24 +81,27 @@ class State {
       loc += '&showAs=list';
     if (this.payeeToFilter)
       loc += '&payee=' + this.payeeToFilter;
+    if (this.advancedView)
+      loc += '&advanced';
     window.location = loc;    
   }
   // I've added in the html a list of all payees in a tracker.
   // Clicking 'View entries' next to a payee calls this function, which adds 'payee=<payee name>'
   // to the query string and reloads the page. This will show all entries just for this payee.
   reloadAsFilteredByPayee(payeeName) {
+    // Need to urlencode the payee because nothing precludes the payee name from 
+    // having characters that aren't allowed in a URI, such as spaces and ampersands.
     this.payeeToFilter = encodeURIComponent(payeeName);
     let loc = '/?exp_traq_name=' + this.traq;
     if (!this.showTopN)
       loc += '&show=all';
     if (this.showAsTable)
       loc += '&showAs=table';
-    // Need to urlencode the payee because nothing precludes the payee name from 
-    // having characters that aren't allowed in a URI, such as spaces and ampersands.
     loc += '&payee=' + this.payeeToFilter;
+    if (this.advancedView)
+      loc += '&advanced';
     window.location = loc;
   }
-
   removePayeeFilter() {
     this.payeeToFilter = "";
     let loc = '/?exp_traq_name=' + this.traq;
@@ -96,6 +109,34 @@ class State {
       loc += '&show=all';
     if (this.showAsTable)
       loc += '&showAs=table';
+    if (this.advancedView)
+      loc += '&advanced';
+    window.location = loc;
+  }
+  reloadAsAdvancedView() {
+    this.advancedView = true;
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    
+    // No need to check for payee filter, as it's not an option in basic view
+      
+    loc += '&advanced';
+    window.location = loc;
+  }
+  reloadAsBasicView() {
+    this.advancedView = false;
+    this.payeeToFilter = "";
+    let loc = '/?exp_traq_name=' + this.traq;
+    if (!this.showTopN)
+      loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+
+    // Again, no need to check for payee filter, since we're loading the basic view
+
     window.location = loc;
   }
 }

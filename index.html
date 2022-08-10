@@ -40,6 +40,13 @@
           {% endif %}
           <a href="{{ url|safe }}">{{ url_linktext }}</a>
         </div>
+        <div class="text-right">
+          {% if advancedView %}
+          Advanced view <a href="#" id="toggle-basic-view" onclick="state.reloadAsBasicView()">Switch to basic view</a>
+          {% else %} 
+          Basic view <a href="#" id="toggle-advanced-view" onclick="state.reloadAsAdvancedView()">Switch to advanced view</a>
+          {% endif %}
+        </div>
         {% if lastXpost is defined %}
         <div class='text-right'>Just xposted to <a href='/?exp_traq_name={{ lastXpost }}'>{{ lastXpost }}</a></div>
         {% endif %}  
@@ -124,7 +131,7 @@
       <!-- MAIN DATA DISPLAY -->
       <div id="data">
 
-      {% if filteringByPayee %}
+      {% if advancedView and filteringByPayee %}
         <!-- Filtering-by-payee box -->
         <div class="payee-filter-info-box alert alert-info" role="alert">
           Showing entries for payee <strong>{{ payeeToFilter }}</strong> <i class="material-icons md-16">lens</i>
@@ -200,41 +207,43 @@
         {% endif %}
 
           <!-- Summary box: shows total amount, avg., etc. -->
-          <div class="summary-box alert alert-info" role="alert">
-            {{ totalEntriesAfterPayeeFilter }} entries 
-            {% if filteringByPayee %}
-              for payee <strong>{{ payeeToFilter }}</strong>
-            {% endif %}
-            <i class="material-icons md-16">lens</i>
-            Total amount: ${{ "{:0,.0f}".format(totalAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
-            Avg. amount: ${{ "{:0,.2f}".format(avgAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
-            <a href="#" onclick="toggleSummaryBoxDetails()" id="show_hide_details_btn">Details</a>
-            <div id="summary_box_details" style="display: none;">
-              <table>
-                <tr>
-                  <th>Year</th>
-                  <th>Total amount</th>
-                  <th># entries</th>
-                  <th>Avg. amount</th>
-                </tr>
-                {% for year in sortedYears %}
-                <tr>
-                  <td>{{ year }}</td>
-                  <td>${{ "{:0,.0f}".format(yearMap[year][0]) }}</td>
-                  <td>{{ yearMap[year][1] }}</td>
-                  <td>${{ "{:0,.2f}".format(yearMap[year][2]) }}</td>
-                </tr>
-                {% endfor %}
-              </table>
+          {% if advancedView %}
+            <div class="summary-box alert alert-info" role="alert">
+              {{ totalEntriesAfterPayeeFilter }} entries 
+              {% if filteringByPayee %}
+                for payee <strong>{{ payeeToFilter }}</strong>
+              {% endif %}
+              <i class="material-icons md-16">lens</i>
+              Total amount: ${{ "{:0,.0f}".format(totalAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
+              Avg. amount: ${{ "{:0,.2f}".format(avgAmtAfterPayeeFilter) }} <i class="material-icons md-16">lens</i>
+              <a href="#" onclick="toggleSummaryBoxDetails()" id="show_hide_details_btn">Details</a>
+              <div id="summary_box_details" style="display: none;">
+                <table>
+                  <tr>
+                    <th>Year</th>
+                    <th>Total amount</th>
+                    <th># entries</th>
+                    <th>Avg. amount</th>
+                  </tr>
+                  {% for year in sortedYears %}
+                  <tr>
+                    <td>{{ year }}</td>
+                    <td>${{ "{:0,.0f}".format(yearMap[year][0]) }}</td>
+                    <td>{{ yearMap[year][1] }}</td>
+                    <td>${{ "{:0,.2f}".format(yearMap[year][2]) }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+              </div>
             </div>
-          </div>        
+          {% endif %} <!-- advancedView -->
       </div>
       <!-- END DATA DISPLAY -->
 
       <!-- INFO SECTION -->
       <div class="alert alert-warning" role="alert">
         <ul>
-          <li>List all trackers: <a href='/?listTrackers'>'/?listTrackers'</a></li>
+          <li>List all trackers: <a href='/?listTrackers'>'/?listTrackers'</a>
             {% if uniqueTrackers|length > 0 %}
             <ul>
               <li>Unique trackers:</li>
@@ -246,7 +255,9 @@
               <li>{{ entryCountAcrossAllTrackers }} entries across all trackers</li>
             </ul>
             {% endif %}
-            <li>{{ uniquePayees|count }} payees (${{ "{:0,.0f}".format(totalAmtBeforePayeeFilter) }} total) in tracker '{{exp_traq_name}}':
+          </li>
+          {% if advancedView %}
+          <li>{{ uniquePayees|count }} payees (${{ "{:0,.0f}".format(totalAmtBeforePayeeFilter) }} total) in tracker '{{exp_traq_name}}':
             <ol>
               {% for uniquePayee in uniquePayees %}
               <li><strong>{{ uniquePayee }}</strong> 
@@ -258,6 +269,7 @@
               {% endfor %}
             </ol>
           </li>
+          {% endif %}
         </ul>
       </div>
       <!-- END INFO SECTION -->
