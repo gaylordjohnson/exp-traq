@@ -28,9 +28,9 @@
 .material-icons.md-16 { 
   font-size: 12px; 
   /* Changing color to confirm that app deployment was of the latest version. Am paranoid like that. */
-  /* color: deeppink;  */
+  color: deeppink; 
   /* color: lightgreen; */
-  color: lightsalmon;
+  /* color: lightsalmon; */
 }
 #data {
   margin: 40px 0px 30px 0px;

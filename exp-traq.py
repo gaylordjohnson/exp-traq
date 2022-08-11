@@ -152,6 +152,16 @@ def populatePayeeMap(entries):
       payeeMap[entry.payee][1] += 1
   return payeeMap, totalAmount
 
+def convertEntriesToEastern(entries):
+  """The entries were fetched from the datastore, where all datetimes are in UTC. 
+  Convert all entry.datetime to eastern TZ for display in the app.
+  """
+  for entry in entries:
+    # Today's date --> convert from UTC to Eastern -- WTF is this so HARD?!
+    entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
+    entry.dateYMD = datetime.datetime.strftime(entry.datetime, '%Y-%m-%d')
+    entry.dateWeekday = datetime.datetime.strftime(entry.datetime, '%a')
+
 class Author(ndb.Model):
   """Sub model for representing an author.
   """
@@ -209,87 +219,62 @@ class MainPage(webapp2.RequestHandler):
   """Handler class for managing the main page
   """
 
-  #===================================== GET =====================================
-  def get(self):
-    """Handler for HTTP GET. This gets the content of our application. Note: POST, PUT, and DELETE
-    are implemented in the next class below. In some cases they redirect back to the main page
-    to get the page content updated. A more efficient approach would be to do everything via AJAX
-    and dynamically update the relevant parts of the DOM. BUT it's hard to do since my app uses
-    a backend framework. This would have been a breeze in Vue, React, or another FE framework.
-    As it is, that all is not worth it; it's easier to simply reload the entire page.
-    """
-    # print(str(self.request))
-    getMethodStart = time.time()
-
-    advancedView = False
-    if 'advanced' in self.request.arguments():
-      advancedView = True
-
-    exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
-
-    user = users.get_current_user()
-    if user:
-      url = users.create_logout_url(self.request.uri)
-      url_linktext = 'Log out'
-    else:
-      url = users.create_login_url(self.request.uri)
-      url_linktext = 'Log in'
-
-    # Optional tools. Let's get them out of the way before the core code of this method.
+  def runOptionalToolsIfRequested(self, exp_traq_name):
     if self.request.get('runMigration') == 'PayeeContent':
       runPayeeContentMigration()
     elif self.request.get('runMigration') == 'PayeeType':
       runPayeeTypeMigration(exp_traq_name)
-    # Optional tool for checking on all trackers.
-    # Invoke by including the 'listTrackers' query-string parameter (doesn't need to have a value)
     uniqueTrackers = []
     entryCountAcrossAllTrackers = -1
     if 'listTrackers' in self.request.arguments(): # Checks for presence of 'listTrackers' param
-      uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()
+      uniqueTrackers, entryCountAcrossAllTrackers = getInfoAboutAllTrackers()    
+    return uniqueTrackers, entryCountAcrossAllTrackers
 
-    fetchLimit = DEFAULT_FOR_TOP_N 
-    show = self.request.get('show')
-    if show:
-      if show == 'all':
-        fetchLimit = None
-      else:
-        fetchLimit = int(show)
-    
+
+  def generateBasicView(self, template_values, exp_traq_name, fetchLimit):
+    # Fetch up to fetchLimit entries from the datastore
+    fetchEntriesStart = time.time()
+    entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch(fetchLimit)
+    logging.debug('GET method -> generateBasicView() -> fetch entries from datastore: %.3f s' % (time.time() - fetchEntriesStart))
+
+    # Fetch the totalEntryCount
+    fetchEntryCountStart = time.time()
+    totalEntries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).count()
+    logging.debug('GET method -> generateBasicView() -> fetch entry count from datastore: %.3f s' % (time.time() - fetchEntryCountStart))
+
+    # Get list of unique payees for our auto-suggest dropdown
+    # Note: payeeObjects are **Entry** objects with only payee property filled (since we're doing a projection)
+    # Therefore we use obj.payee to access payee name
+    fetchUniquePayeesStart = time.time()
+    payeeObjects = Entry.query(ancestor=exp_traq_key(exp_traq_name), projection=[Entry.payee], distinct=True).order(Entry.payee).fetch()
+    logging.debug('GET method -> generateBasicView() -> fetch unique payees from datastore: %.3f s' % (time.time() - fetchUniquePayeesStart))
+    uniquePayees = []
+    for obj in payeeObjects:
+      uniquePayees.append(obj.payee)
+
+    # Convert entries' datetime from UTC to Eastern
+    convertEntriesToEastern(entries)
+
+    template_values['entries'] = entries
+    template_values['totalEntries'] = totalEntries
+    template_values['uniquePayees'] = uniquePayees
+
+
+  def generateAdvancedView(self, template_values, exp_traq_name, fetchLimit):
     payeeToFilter = self.request.get('payee')
     if payeeToFilter:
       filteringByPayee = True
     else:
       filteringByPayee = False
 
-    # IMPORTANT NOTE: since as of recently I'm expanding the app with new functionality
-    # like showing entries only for a specific payee, showing a list of unique payees with their totals,
-    # and other calculations like totals and averages for all requested entries, I think it no longer makes
-    # sense to filter or prune the entry list at the DB LEVEL. Instead it makes sense to grab ALL entries
-    # from the DB and do all my calculations in python. I originally implemented the 'show last N entries'
-    # logic because getting all entries was slow. HOWEVER, I don't know if the slowness was between
-    # Python and DB -- or -- between Python and the browser. If the latter, then grabbing everything
-    # from DB shounldn't be a bottleneck. Let's do this and see. Worse come to worse and this latest
-    # code proves slow, I can later implement
-    # an optional flow where there will be no calculations, and I'll only be grabbing 'last N entries'
-    # like before.
-    
-    # ALSO NOTE: with these changes we no longer need all the indexes we've created
-    # Let me keep them for now in case I need to revert some of the logic. I can remove 
-    # them in the long term if needed.
-
-    # There are 3 logical levels: 
-    #     all entries --> we calc stuff like the list of payees and spend per payee
-    #     a payee's entries (if payee filter requested) --> we calc # of entries, total spend, avg spend
-    #     last N entries (if last N requested) --> we send only the N entries to display in the browser
-
     # Get all entries
     fetchEntriesStart = time.time()
     entries = Entry.query(ancestor=exp_traq_key(exp_traq_name)).order(-Entry.datetime).order(-Entry.timestamp).fetch()
-    logging.debug('GET method -> fetch entries from datastore: %.3f s' % (time.time() - fetchEntriesStart))
+    logging.debug('GET method -> generateAdvancedView() -> fetch entries from datastore: %.3f s' % (time.time() - fetchEntriesStart))
 
-    # Get a map of total amounts etc per payee; then pass the map to the HTML
+    # Create a map of total amounts etc per payee
     payeeMap, totalAmtBeforePayeeFilter = populatePayeeMap(entries)
-    # Get unique list of payees sorted by descending amount of their total amounts
+    # Get unique list of payees sorted by descending values of their total
     uniquePayees = sorted(payeeMap.keys(), key=lambda x: payeeMap[x], reverse=True)
     
     # If payee filter was requested, filter entries down to those from that payee
@@ -301,11 +286,7 @@ class MainPage(webapp2.RequestHandler):
     totalAmtAfterPayeeFilter, avgAmtAfterPayeeFilter = getTotalAndAvgAmount(entries)
 
     # Convert entries' datetime from UTC to Eastern
-    for entry in entries:
-      # Today's date --> convert from UTC to Eastern -- WTF is this so HARD?!
-      entry.datetime = datetime.datetime.fromtimestamp(time.mktime(entry.datetime.timetuple()), EasternTZInfo())
-      entry.dateYMD = datetime.datetime.strftime(entry.datetime, '%Y-%m-%d')
-      entry.dateWeekday = datetime.datetime.strftime(entry.datetime, '%a')
+    convertEntriesToEastern(entries)
 
     # Get a map of summary data (total, # entries, avg.) by year
     yearMap = getSummaryDataByYear(entries)
@@ -314,39 +295,91 @@ class MainPage(webapp2.RequestHandler):
     if fetchLimit:
       entries = entries[:fetchLimit]
 
+    template_values['payeeToFilter'] = payeeToFilter
+    template_values['filteringByPayee'] = filteringByPayee
+    template_values['entries'] = entries
+    template_values['payeeMap'] = payeeMap
+    template_values['totalAmtBeforePayeeFilter'] = totalAmtBeforePayeeFilter
+    template_values['uniquePayees'] = uniquePayees
+    template_values['totalEntries'] = totalEntriesAfterPayeeFilter
+    template_values['totalAmtAfterPayeeFilter'] = totalAmtAfterPayeeFilter
+    template_values['avgAmtAfterPayeeFilter'] = avgAmtAfterPayeeFilter
+    template_values['yearMap'] = yearMap
+    template_values['sortedYears'] = sorted(yearMap.keys(), reverse=True)
+
+  #===================================== GET =====================================
+  def get(self):
+    """Handler for HTTP GET. This gets the content of our application. POST, PUT, and DELETE
+    are implemented in the next class below. In some cases they redirect back to the main page
+    to get the page content updated. A more efficient approach would be to do everything via AJAX
+    and dynamically update the relevant parts of the DOM. BUT it's hard to do since my app uses
+    a backend framework. This would have been a breeze in Vue, React, or another FE framework.
+    As it is, that all is not worth it; it's easier to simply reload the entire page.
+    """
+    # print(str(self.request))
+    getMethodStart = time.time()
+
+    exp_traq_name = self.request.get('exp_traq_name', DEFAULT_EXP_TRAQ_NAME)
+
+    # Let's get this out of the way before the core code of this method.
+    uniqueTrackers, entryCountAcrossAllTrackers = self.runOptionalToolsIfRequested(exp_traq_name)
+
+    user = users.get_current_user()
+    if user:
+      url = users.create_logout_url(self.request.uri)
+      url_linktext = 'Log out'
+    else:
+      url = users.create_login_url(self.request.uri)
+      url_linktext = 'Log in'
+
+    fetchLimit = DEFAULT_FOR_TOP_N 
+    show = self.request.get('show')
+    if show:
+      if show == 'all':
+        fetchLimit = None
+      else:
+        fetchLimit = int(show)
+    
+    if 'advanced' not in self.request.arguments():
+      advancedView = False
+    else:
+      advancedView = True
+
+    # We init the map here, then the generate<blah> methods below will add more view-specific items to it.
     template_values = {
-      'advancedView': advancedView,
-      'yearMap': yearMap,
-      'sortedYears': sorted(yearMap.keys(), reverse=True),
-      'showAs': self.request.get('showAs'),
-      'show': show,
-      'user': user,
-      'entries': entries,
-      'totalEntriesAfterPayeeFilter': totalEntriesAfterPayeeFilter,
-      'uniquePayees': uniquePayees,
       'exp_traq_name': urllib.quote_plus(exp_traq_name),
+      'user': user,
       'url': url,
       'url_linktext': url_linktext,
+      'show': show,
+      'showAs': self.request.get('showAs'),
       'defaultForTopN': DEFAULT_FOR_TOP_N,
+      'advancedView': advancedView,
       'uniqueTrackers': uniqueTrackers,
       'entryCountAcrossAllTrackers': entryCountAcrossAllTrackers,
-      'payeeMap': payeeMap,
-      'totalAmtBeforePayeeFilter': totalAmtBeforePayeeFilter,
-      'filteringByPayee': filteringByPayee,
-      'payeeToFilter': payeeToFilter,
-      'totalAmtAfterPayeeFilter': totalAmtAfterPayeeFilter,
-      'avgAmtAfterPayeeFilter': avgAmtAfterPayeeFilter,
     }
-
     # If we just added an entry and xposted it to another tracker, add the target tracker
     # name to template values so we can give user a handy link to that tracker to check things
     if 'lastXpost' in self.request.arguments(): # Was 'lastXpost' query string parameter defined?
       template_values['lastXpost'] = self.request.get('lastXpost')
 
+    # Bifurcate between generating an advanced view and a basic view.
+    # Up until a month ago, exp-traq had a simple and fast interface: CRUD operations 
+    # on payment entries and a fast view option, load the last 10 entries, and a slower
+    # option: load all entries. Then I added features like summary stats on all
+    # entries and summary stats on all payees, which require always fetching all entries
+    # and doing calculations in python. This became noticeably slow. Now I'm bringing back the
+    # basic view. The default view for everyday use will be basic view -> show last 10 entries.
+    if not advancedView:
+      self.generateBasicView(template_values, exp_traq_name, fetchLimit) 
+    else:
+      self.generateAdvancedView(template_values, exp_traq_name, fetchLimit)
+
     template = JINJA_ENVIRONMENT.get_template('index.html')
     self.response.write(template.render(template_values))
 
     logging.debug('GET method: %.3f s' % (time.time() - getMethodStart))
+
 
 class EntryHandler(webapp2.RequestHandler):
   '''Handler class for managing CRUD operations on individual entries
@@ -424,10 +457,12 @@ class EntryHandler(webapp2.RequestHandler):
     query_params = {
       'exp_traq_name': exp_traq_name, 
       'show': self.request.get('show'),
-      'showAs': self.request.get('showAs')
+      'showAs': self.request.get('showAs'),
     }
     if xpostTo:
       query_params['lastXpost'] = xpostTo
+    if 'advanced' in self.request.arguments():
+      query_params['advanced'] = "" # Remember, we need the QS param simply to be present
     self.redirect('/?' + urllib.urlencode(query_params))
 
     logging.debug('POST method: %.3f s' % (time.time() - postMethodStart))
