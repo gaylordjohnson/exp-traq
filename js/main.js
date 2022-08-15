@@ -39,51 +39,20 @@ class State {
     }
   }
   reloadAsTable() {
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    loc += '&showAs=table';
-    if (this.payeeToFilter)
-      loc += '&payeefilter=' + this.payeeToFilter;
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;
+    this.showAsTable = true;
+    window.location = '/?' + this.getQueryString();
   }
   reloadAsList() {
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    loc += '&showAs=list';
-    if (this.payeeToFilter)
-      loc += '&payeefilter=' + this.payeeToFilter;
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;
+    this.showAsTable = false;
+    window.location = '/?' + this.getQueryString();
   }
   reloadShowAll() {
-    let loc = '/?exp_traq_name=' + this.traq;
-    loc += '&show=all';
-    if (this.showAsTable)
-      loc += '&showAs=table';
-    else
-      loc += '&showAs=list';
-    if (this.payeeToFilter)
-      loc += '&payeefilter=' + this.payeeToFilter;
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;
+    this.showTopN = false;
+    window.location = '/?' + this.getQueryString();
   }
   reloadShowTopN() {
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (this.showAsTable)
-      loc += '&showAs=table';
-    else
-      loc += '&showAs=list';
-    if (this.payeeToFilter)
-      loc += '&payeefilter=' + this.payeeToFilter;
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;    
+    this.showTopN = true;
+    window.location = '/?' + this.getQueryString();
   }
   // I've added in the html a list of all payees in a tracker.
   // Clicking 'View entries' next to a payee calls this function, which adds 'payeefilter=<payee name>'
@@ -92,66 +61,33 @@ class State {
     // Need to urlencode the payee because nothing precludes the payee name from 
     // having characters that aren't allowed in a URI, such as spaces and ampersands.
     this.payeeToFilter = encodeURIComponent(payeeName);
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    if (this.showAsTable)
-      loc += '&showAs=table';
-    loc += '&payeefilter=' + this.payeeToFilter;
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;
+    window.location = '/?' + this.getQueryString();
   }
   removePayeeFilter() {
     this.payeeToFilter = "";
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    if (this.showAsTable)
-      loc += '&showAs=table';
-    if (this.advancedView)
-      loc += '&advanced';
-    window.location = loc;
+    window.location = '/?' + this.getQueryString();
   }
   reloadAsAdvancedView() {
     this.advancedView = true;
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    if (this.showAsTable)
-      loc += '&showAs=table';
-    
-    // No need to check for payee filter, as it's not an option in basic view
-      
-    loc += '&advanced';
-    window.location = loc;
+    window.location = '/?' + this.getQueryString();
   }
   reloadAsBasicView() {
     this.advancedView = false;
-    this.payeeToFilter = "";
-    let loc = '/?exp_traq_name=' + this.traq;
-    if (!this.showTopN)
-      loc += '&show=all';
-    if (this.showAsTable)
-      loc += '&showAs=table';
-
-    // Again, no need to check for payee filter, since we're loading the basic view
-
-    window.location = loc;
+    window.location = '/?' + this.getQueryString();
   }
 
-  // Get query string for the action parameter of "#mainForm"
-  getMainFormActionString() {
-    let loc = '/submit?exp_traq_name=' + this.traq;
+  // Returns query string based on the state
+  getQueryString() {
+    let qs = 'exp_traq_name=' + this.traq;
     if (this.advancedView)
-      loc += '&advanced';
+      qs += '&advanced';
     if (!this.showTopN)
-      loc += '&show=all';
+      qs += '&show=all';
     if (this.showAsTable)
-      loc += '&showAs=table';
+      qs += '&showAs=table';
     if (this.payeeToFilter)
-      loc += '&payeefilter=' + this.payeeToFilter;
-    return loc;
+      qs += '&payeefilter=' + this.payeeToFilter;
+    return qs;
   }
 }
 
@@ -225,7 +161,7 @@ window.addEventListener('load', function() {
   // action="/submit?exp_traq_name={{ exp_traq_name }}&show={{ show }}&showAs={{ showAs }}{% if advancedView %}&advanced{% endif %}")
   // and we get ugly query strings, with empty QS params like "&show=". 
   $(document).ready(function() {
-    $('#mainForm').attr('action', state.getMainFormActionString());
+    $('#mainForm').attr('action', '/submit?' + state.getQueryString());
   });
 
   //
