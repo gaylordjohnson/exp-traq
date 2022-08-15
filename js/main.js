@@ -1,5 +1,5 @@
 // Let's play with state management:
-// Now that we have 3 query string params, it's pain in the butt 
+// Now that we have a whole bunch of query string params, it's pain in the butt 
 // to manage all the permutations, so will use this global
 // state object as a centralized source of truth.
 
@@ -16,7 +16,7 @@ class State {
   // Exp traq name must be passed in, because it comes from the server via jinja2 
   // template and main.js doesn't have access to that.
   // The other parts of the state come from the query string
-  initFromServerAndQueryString(expTraqName) {
+  initFromJinjaAndQueryString(expTraqName) {
     this.traq = expTraqName;
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('show')) {
@@ -31,8 +31,8 @@ class State {
       else
         this.showAsTable = false;
     }
-    if (urlParams.has('payee')) {
-      this.payeeToFilter = encodeURIComponent(urlParams.get('payee'));
+    if (urlParams.has('payeefilter')) {
+      this.payeeToFilter = encodeURIComponent(urlParams.get('payeefilter'));
     }
     if (urlParams.has('advanced')) {
       this.advancedView = true;
@@ -44,7 +44,7 @@ class State {
       loc += '&show=all';
     loc += '&showAs=table';
     if (this.payeeToFilter)
-      loc += '&payee=' + this.payeeToFilter;
+      loc += '&payeefilter=' + this.payeeToFilter;
     if (this.advancedView)
       loc += '&advanced';
     window.location = loc;
@@ -55,7 +55,7 @@ class State {
       loc += '&show=all';
     loc += '&showAs=list';
     if (this.payeeToFilter)
-      loc += '&payee=' + this.payeeToFilter;
+      loc += '&payeefilter=' + this.payeeToFilter;
     if (this.advancedView)
       loc += '&advanced';
     window.location = loc;
@@ -68,7 +68,7 @@ class State {
     else
       loc += '&showAs=list';
     if (this.payeeToFilter)
-      loc += '&payee=' + this.payeeToFilter;
+      loc += '&payeefilter=' + this.payeeToFilter;
     if (this.advancedView)
       loc += '&advanced';
     window.location = loc;
@@ -80,13 +80,13 @@ class State {
     else
       loc += '&showAs=list';
     if (this.payeeToFilter)
-      loc += '&payee=' + this.payeeToFilter;
+      loc += '&payeefilter=' + this.payeeToFilter;
     if (this.advancedView)
       loc += '&advanced';
     window.location = loc;    
   }
   // I've added in the html a list of all payees in a tracker.
-  // Clicking 'View entries' next to a payee calls this function, which adds 'payee=<payee name>'
+  // Clicking 'View entries' next to a payee calls this function, which adds 'payeefilter=<payee name>'
   // to the query string and reloads the page. This will show all entries just for this payee.
   reloadAsFilteredByPayee(payeeName) {
     // Need to urlencode the payee because nothing precludes the payee name from 
@@ -97,7 +97,7 @@ class State {
       loc += '&show=all';
     if (this.showAsTable)
       loc += '&showAs=table';
-    loc += '&payee=' + this.payeeToFilter;
+    loc += '&payeefilter=' + this.payeeToFilter;
     if (this.advancedView)
       loc += '&advanced';
     window.location = loc;
@@ -138,6 +138,20 @@ class State {
     // Again, no need to check for payee filter, since we're loading the basic view
 
     window.location = loc;
+  }
+
+  // Get query string for the action parameter of "#mainForm"
+  getMainFormActionString() {
+    let loc = '/submit?exp_traq_name=' + this.traq;
+    if (this.advancedView)
+      loc += '&advanced';
+    if (!this.showTopN)
+      loc += '&show=all';
+    if (this.showAsTable)
+      loc += '&showAs=table';
+    if (this.payeeToFilter)
+      loc += '&payeefilter=' + this.payeeToFilter;
+    return loc;
   }
 }
 
@@ -206,6 +220,14 @@ var idOfEntryBeingEdited;
 // *after* jQuery lib has been loaded, and it gets loaded right before the </body>
 // Otherwise it gives error "variable $ not found". Also, editForm needs to have been loaded.
 window.addEventListener('load', function() {
+  // Set "#mainForm"'s action param dynamically based on state.
+  // NOTE: this can be done in html directly using jinja template values, but is messy (looks like
+  // action="/submit?exp_traq_name={{ exp_traq_name }}&show={{ show }}&showAs={{ showAs }}{% if advancedView %}&advanced{% endif %}")
+  // and we get ugly query strings, with empty QS params like "&show=". 
+  $(document).ready(function() {
+    $('#mainForm').attr('action', state.getMainFormActionString());
+  });
+
   //
   // Adding hook #1: handling user clicking edit, to populate the form with values
   //

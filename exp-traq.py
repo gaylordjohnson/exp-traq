@@ -261,7 +261,7 @@ class MainPage(webapp2.RequestHandler):
 
 
   def generateAdvancedView(self, template_values, exp_traq_name, fetchLimit):
-    payeeToFilter = self.request.get('payee')
+    payeeToFilter = self.request.get('payeefilter')
     if payeeToFilter:
       filteringByPayee = True
     else:
@@ -454,6 +454,7 @@ class EntryHandler(webapp2.RequestHandler):
       entry2.put()
       logging.debug('POST method -> x-post entry to datastore: %.3f s' % (time.time() - writeEntryStart))
 
+    # Preserve query params so the state is preserved once a user submits a new entry
     query_params = {
       'exp_traq_name': exp_traq_name, 
       'show': self.request.get('show'),
@@ -463,6 +464,8 @@ class EntryHandler(webapp2.RequestHandler):
       query_params['lastXpost'] = xpostTo
     if 'advanced' in self.request.arguments():
       query_params['advanced'] = "" # Remember, we need the QS param simply to be present
+    query_params['payeefilter'] = self.request.get('payeefilter')
+
     self.redirect('/?' + urllib.urlencode(query_params))
 
     logging.debug('POST method: %.3f s' % (time.time() - postMethodStart))

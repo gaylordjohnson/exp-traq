@@ -24,7 +24,7 @@
       // Had to put this JS into HTML rather than main.js because it uses jinja2 preprocessing.      
       console.log('Returned {{ entries|count }} entries of {{ totalEntries }}');
       console.log('{{ uniquePayees|count }} unique payees');
-      state.initFromServerAndQueryString('{{exp_traq_name}}'); // state references a global defined in main.js
+      state.initFromJinjaAndQueryString('{{exp_traq_name}}'); // state references a global defined in main.js
       console.log('State: ' + JSON.stringify(state))
     </script>
   </head>
@@ -71,8 +71,8 @@
       <!-- END PAGE HEADER -->
 
       <!-- MAIN FORM -->    
-      <div id="mainForm">
-        <form action="/submit?exp_traq_name={{ exp_traq_name }}&show={{ show }}&showAs={{ showAs }}{% if advancedView %}&advanced{% endif %}" method="post" autocomplete="off">
+      <div>
+        <form id="mainForm" action="THIS-GETS-SET-BASED-ON-STATE-SEE-JS" method="post" autocomplete="off">
           <div class="form-group row">
             <label class="col-2 col-form-label">Amount</label>
             <div class="col-10">
