@@ -17,6 +17,15 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
     <link type="text/css" rel="stylesheet" href="/css/main.css">
+    
+    <!-- Defining here because need to extrapolate based on jinja -->
+    <style>
+      .material-icons.md-16 { 
+        font-size: 12px; 
+        color: {% if advancedView %}deeppink{% else %}lightsalmon{% endif %}; 
+      } 
+    </style>
+
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- GOOGLE ICON FONTS -->
 
     <script src="/js/main.js"></script>
